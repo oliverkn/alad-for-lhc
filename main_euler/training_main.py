@@ -4,7 +4,7 @@ import shutil
 
 from keras.models import Model
 
-from main_pc import training_config as cfg
+from main_euler import training_config as cfg
 
 from evaluation.basic_evaluator import BasicEvaluator
 from core.supervised_nn_trainer import SupervisedNNTrainer
