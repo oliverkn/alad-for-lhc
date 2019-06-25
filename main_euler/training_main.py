@@ -70,7 +70,7 @@ if __name__ == '__main__':
         os.makedirs(result_dir)
 
     # copy python files
-    shutil.copytree('.', os.path.join(result_dir, 'python'))
+    # shutil.copytree('.', os.path.join(result_dir, 'python'))
 
     # save model config as yaml
     anomaly_detector.save_model_as_yaml(os.path.join(result_dir, 'model.yaml'))
