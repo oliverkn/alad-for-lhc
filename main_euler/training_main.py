@@ -1,11 +1,10 @@
 import argparse
 import os
 import shutil
-import sys
 
 from keras.models import Model
 
-import classifier.training_config as cfg
+from main_pc import training_config as cfg
 
 from evaluation.basic_evaluator import BasicEvaluator
 from core.supervised_nn_trainer import SupervisedNNTrainer

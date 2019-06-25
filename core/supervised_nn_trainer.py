@@ -3,6 +3,7 @@ import os
 import tensorflow as tf
 import keras
 from keras import backend as K
+# from keras.callbacks import ModelCheckpoint
 
 from core import skeleton
 
@@ -27,6 +28,9 @@ class SupervisedNNTrainer(skeleton.AbstractTrainer):
             sess = tf.Session("grpc://" + self.config.remote_address)
             tf.Session.reset("grpc://" + self.config.remote_address)
             K.set_session(sess)
+
+        # checkpointer = ModelCheckpoint(filepath=os.path.join(self.result_dir, '{epoch:02d}_weights.hdf5'), verbose=1,
+        #                                save_best_only=False)
 
         # train model
         agent.model.fit(self.x, self.y, batch_size=self.config.batch_size, shuffle=True, epochs=self.config.max_epochs,
@@ -57,8 +61,5 @@ class Callback(keras.callbacks.Callback):
         print('saving weights...')
         self.agent.save_weights(os.path.join(self.result_dir, str(epoch) + '_weights.h5'))
 
-        print('evaluating...')
-        self.evaluator.evaluate(self.agent, epoch, logs, self.result_dir)
-
-    def on_batch_begin(self, batch, logs=None):
-        pass
+        # print('evaluating...')
+        # self.evaluator.evaluate(self.agent, epoch, logs, self.result_dir)
