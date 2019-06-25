@@ -1,19 +1,31 @@
+"""
+
+KDD ALAD architecture.
+
+Generator (decoder), encoder and discriminator.
+
+"""
 import tensorflow as tf
+from alad_mod import sn
 
-from alad import sn
-from core.basic_nn_anomaly_detector import BasicNNAnomalyDetector
+# --------------------------------DATA--------------------------------
+data_path = '/home/oliverkn/pro/data/test.npy'
 
-
-class ALAD(BasicNNAnomalyDetector):
-
-    def get_anomaly_probability(self, x):
-        return self.model.predict(x)
-
-
+# --------------------------------TRAINER--------------------------------
 learning_rate = 1e-5
 batch_size = 50
-latent_dim = 32
+input_dim = 23
+latent_dim = 6
 init_kernel = tf.contrib.layers.xavier_initializer()
+ema_decay = 0.999
+max_epoch=100
+enable_early_stop = False
+
+do_spectral_norm = True
+allow_zz = True
+
+# result
+result_path = '/home/oliverkn/pro/results'
 
 
 def leakyReLu(x, alpha=0.2, name=None):
@@ -93,7 +105,7 @@ def decoder(z_inp, is_training=False, getter=None, reuse=False):
         name_net = 'layer_3'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(net,
-                                  units=121,
+                                  units=input_dim,
                                   kernel_initializer=init_kernel,
                                   name='fc')
 

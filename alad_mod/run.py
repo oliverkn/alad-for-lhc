@@ -13,33 +13,6 @@ FREQ_PRINT = 200 # print frequency image tensorboard [20]
 FREQ_EV = 1
 PATIENCE = 10
 
-
-import os
-
-import tensorflow as tf
-import keras
-from keras import backend as K
-
-from core import skeleton
-
-
-class AladTrainer(skeleton.AbstractTrainer):
-    def __init__(self, x, evaluator, config, result_dir):
-        self.x = x
-        self.evaluator = evaluator
-        self.config = config
-        self.result_dir = result_dir
-
-    def train(self, alad):
-
-
-
-
-        # train model
-        agent.model.fit(self.x, self.y, batch_size=self.config.batch_size, shuffle=True, epochs=self.config.max_epochs,
-                        verbose=0, callbacks=[callback])
-
-
 def get_getter(ema):  # to update neural net with moving avg variables, suitable for ss learning cf Saliman
     def ema_getter(getter, name, *args, **kwargs):
         var = getter(name, *args, **kwargs)
@@ -101,7 +74,7 @@ def train_and_test(dataset, nb_epochs, degree, random_seed, label,
         dataset, label))
 
     # Import model and data
-    network = importlib.import_module('alad.{}_utilities'.format(dataset))
+    network = importlib.import_module('alad_mod.{}_utilities'.format(dataset))
     data = importlib.import_module("data.{}".format(dataset))
 
     # Parameters
