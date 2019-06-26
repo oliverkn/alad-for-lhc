@@ -1,6 +1,10 @@
+import os
+
 import numpy as np
 import sklearn
 import sklearn.preprocessing
+
+from sklearn.preprocessing import Normalizer
 
 
 def load_supervised_binary(list_file_sm, list_file_bsm):
@@ -40,3 +44,53 @@ def preprocess_supervised_binary(data, labels, shuffle=True, normalize=True, val
     labels_test = labels[n_test:]
 
     return data_train, labels_train, data_test, labels_test
+
+
+def build(list_file_sm, list_file_bsm, path, shuffle=True, normalize=True, validation=0.5):
+    list_data_sm = []
+    list_data_bsm = []
+
+    for file_sm in list_file_sm:
+        list_data_sm.append(np.load(file_sm))
+
+    for file_bsm in list_file_bsm:
+        list_data_bsm.append(np.load(file_bsm))
+
+    data_sm = np.concatenate(list_data_sm)
+    data_bsm = np.concatenate(list_data_bsm)
+    labels_sm = np.zeros((data_sm.shape[0]))
+    labels_bsm = np.ones((data_bsm.shape[0]))
+
+    # Normalize data
+    if normalize:
+        normalizer = Normalizer().fit(data_sm)
+        data_sm = normalizer.transform(data_sm)
+        data_bsm = normalizer.transform(data_bsm)
+
+    # Split data
+    n_valid_sm = int(data_sm.shape[0] * validation)
+    n_valid_bsm = int(data_bsm.shape[0] * validation)
+
+    data_sm_train = data_sm[:n_valid_sm]
+    data_sm_valid = data_sm[n_valid_sm:]
+    labels_sm_train = labels_sm[:n_valid_sm]
+    labels_sm_valid = labels_sm[n_valid_sm:]
+
+    data_bsm_train = data_bsm[:n_valid_bsm]
+    data_bsm_valid = data_bsm[n_valid_bsm:]
+    labels_bsm_train = labels_bsm[:n_valid_bsm]
+    labels_bsm_valid = labels_bsm[n_valid_bsm:]
+
+    # Build supervised dataset
+    data_supervised_train = np.concatenate([data_sm_train, data_bsm_train])
+    data_supervised_valid = np.concatenate([data_sm_valid, data_bsm_valid])
+    labels_supervised_train = np.concatenate([labels_sm_train, labels_bsm_train])
+    labels_supervised_valid = np.concatenate([labels_sm_valid, labels_bsm_valid])
+
+    np.save(os.path.join(path, 'train_supervised.npy'),
+            {'x': data_supervised_train, 'y': labels_supervised_train})
+    np.save(os.path.join(path, 'valid_supervised.npy'),
+            {'x': data_supervised_valid, 'y': labels_supervised_valid})
+
+    # Unsupervised dataset
+    np.save(os.path.join(path, 'train_sm_only.npy'), data_sm_train)

@@ -27,7 +27,9 @@ if __name__ == '__main__':
     print('---------- PRE-PROCESS DATA ----------')
 
     print('training data shapes:' + str(x_train.shape))
+    print('training labels shapes:' + str(y_train.shape))
     print('evaluation data shapes:' + str(x_eval.shape))
+    print('evaluation labels shapes:' + str(y_eval.shape))
 
     # perform data augmentation
     if cfg.enable_augmentation:
