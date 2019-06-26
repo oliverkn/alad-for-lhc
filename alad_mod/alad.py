@@ -198,6 +198,41 @@ class ALAD:
                                                               reuse=True,
                                                               do_spectral_norm=config.do_spectral_norm)
 
+        if config.enable_sm:
+
+            with tf.name_scope('summary'):
+                with tf.name_scope('dis_summary'):
+                    tf.summary.scalar('loss_discriminator', loss_discriminator, ['dis'])
+                    tf.summary.scalar('loss_dis_encoder', loss_dis_enc, ['dis'])
+                    tf.summary.scalar('loss_dis_gen', loss_dis_gen, ['dis'])
+                    tf.summary.scalar('loss_dis_xz', dis_loss_xz, ['dis'])
+                    tf.summary.scalar('loss_dis_xx', dis_loss_xx, ['dis'])
+                    if config.allow_zz:
+                        tf.summary.scalar('loss_dis_zz', dis_loss_zz, ['dis'])
+
+                with tf.name_scope('gen_summary'):
+                    tf.summary.scalar('loss_generator', loss_generator, ['gen'])
+                    tf.summary.scalar('loss_encoder', loss_encoder, ['gen'])
+                    tf.summary.scalar('loss_encgen_dxx', cost_x, ['gen'])
+                    if config.allow_zz:
+                        tf.summary.scalar('loss_encgen_dzz', cost_z, ['gen'])
+
+                if config.enable_early_stop:
+                    with tf.name_scope('validation_summary'):
+                        tf.summary.scalar('valid', rec_error_valid, ['v'])
+
+                with tf.name_scope('img_summary'):
+                    heatmap_pl_latent = tf.placeholder(tf.float32,
+                                                       shape=(1, 480, 640, 3),
+                                                       name="heatmap_pl_latent")
+                    sum_op_latent = tf.summary.image('heatmap_latent', heatmap_pl_latent)
+
+                sum_op_dis = tf.summary.merge_all('dis')
+                sum_op_gen = tf.summary.merge_all('gen')
+                sum_op = tf.summary.merge([sum_op_dis, sum_op_gen])
+                sum_op_im = tf.summary.merge_all('image')
+                sum_op_valid = tf.summary.merge_all('v')
+
         self.__dict__.update(locals())
 
     def init_model(self):
@@ -207,28 +242,26 @@ class ALAD:
         return tf.get_default_session().run(self.y_pred, feed_dict={self.x_in: x})
 
     def fit(self, x, max_epoch, logdir):
-        saver = tf.train.Saver(max_to_keep=2)
-        save_model_secs = None if self.config.enable_early_stop else 20
-        sv = tf.train.Supervisor(logdir=logdir, save_summaries_secs=None, saver=saver, save_model_secs=save_model_secs)
+        saver = tf.train.Saver()
 
         tf_config = tf.ConfigProto()
         tf_config.gpu_options.allow_growth = True
 
         logger.info('Start training...')
+
+        sv = tf.train.Supervisor(logdir=logdir, save_summaries_secs=None, saver=saver)
+
         with sv.managed_session(config=tf_config) as sess:
 
             step = sess.run(self.global_step)
             writer = tf.summary.FileWriter(logdir, sess.graph)
             train_batch = 0
-            epoch = 0
-            best_valid_loss = 0
-            request_stop = False
 
             batch_size = self.config.batch_size
             nr_batches_train = int(x.shape[0] / batch_size)
 
             # EPOCHS
-            while not sv.should_stop() and epoch < max_epoch:
+            for epoch in range(max_epoch):
 
                 lr = self.config.learning_rate
                 begin = time.time()
@@ -279,6 +312,10 @@ class ALAD:
                     train_loss_gen += lg
                     train_loss_enc += le
 
+                    if self.config.enable_sm:
+                        sm = sess.run(self.sum_op, feed_dict=feed_dict)
+                        writer.add_summary(sm, step)
+
                     train_batch += 1
 
                 # end of epoch
@@ -304,10 +341,8 @@ class ALAD:
                              train_loss_enc, train_loss_dis, train_loss_dis_xz,
                              train_loss_dis_xx))
 
-                epoch += 1
-
-            # end of trainig
-            sv.saver.save(sess, logdir + '/model.ckpt', global_step=step)
+                # end of trainig
+                saver.save(sess, logdir + '/model', global_step=step)
 
 
 def get_getter(ema):  # to update neural net with moving avg variables, suitable for ss learning cf Saliman

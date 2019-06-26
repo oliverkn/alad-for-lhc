@@ -9,7 +9,7 @@ import tensorflow as tf
 from alad_mod import sn
 
 # --------------------------------DATA--------------------------------
-data_path = '/home/oliverkn/pro/data/test.npy'
+data_path = '/home/oliverkn/pro/data/full.npy'
 
 # --------------------------------TRAINER--------------------------------
 learning_rate = 1e-5
@@ -18,8 +18,9 @@ input_dim = 23
 latent_dim = 6
 init_kernel = tf.contrib.layers.xavier_initializer()
 ema_decay = 0.999
-max_epoch=100
+max_epoch = 100
 enable_early_stop = False
+enable_sm = True
 
 do_spectral_norm = True
 allow_zz = True

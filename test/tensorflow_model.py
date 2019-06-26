@@ -41,28 +41,28 @@ def f(x):
     return 2 * x
 
 
-x_data = np.arange(-10, 10).reshape((-1, 1))
+x_data = np.arange(-100000, 100000).reshape((-1, 1))
 y_data = f(x_data).reshape((-1, 1))
-
-# sess = tf.Session()
-# with sess.as_default():
-#     model = LinModel()
-#     model.init_model()
-#     print(model.pred(x_data))
-#
-#     # `sess.graph` provides access to the graph used in a `tf.Session`.
-#     writer = tf.summary.FileWriter(".", sess.graph)
-#
-#     model.fit(x_data, y_data, 20)
-#     print(model.pred(x_data))
-#
-#     model.save("model.ckpt")
 
 sess = tf.Session()
 with sess.as_default():
     model = LinModel()
     model.init_model()
-
-    model.load("model.ckpt")
-
     print(model.pred(x_data))
+
+    # `sess.graph` provides access to the graph used in a `tf.Session`.
+    writer = tf.summary.FileWriter(".", sess.graph)
+
+    model.fit(x_data, y_data, 20)
+    print(model.pred(x_data))
+
+    model.save("model.ckpt")
+
+# sess = tf.Session()
+# with sess.as_default():
+#     model = LinModel()
+#     model.init_model()
+#
+#     model.load("model.ckpt")
+#
+#     print(model.pred(x_data))
