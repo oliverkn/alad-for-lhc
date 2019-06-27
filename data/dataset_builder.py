@@ -1,13 +1,16 @@
+import argparse
 from data.raw_loader import *
 
-mode = 'pc'  # 'euler'
+parser = argparse.ArgumentParser(description='Training')
+parser.add_argument('--mode', metavar='-m', type=str, help='mode=pc, euler', default='pc')
+args = parser.parse_args()
 
 # path and file information
-if mode == 'pc':
+if args.mode == 'pc':
     path = '/home/oliverkn/pro/data_raw/'
-    target_path = '/home/oliverkn/pro/data/4_4'
+    target_path = '/home/oliverkn/pro/data/test'
 
-if mode == 'euler':
+if args.mode == 'euler':
     path = '/cluster/home/knappo/data_raw/'
     target_path = '/cluster/home/knappo/data_raw/4_4'
 
