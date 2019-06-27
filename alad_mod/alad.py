@@ -23,7 +23,7 @@ class ALAD:
 
         global_step = tf.Variable(0, name='global_step', trainable=False)
 
-        # Placeholders: todo shape
+        # Placeholders
         x_pl = tf.placeholder(tf.float32, shape=[None, config.input_dim],
                               name="input_x")
         z_pl = tf.placeholder(tf.float32, shape=[None, latent_dim],
@@ -198,6 +198,34 @@ class ALAD:
                                                               reuse=True,
                                                               do_spectral_norm=config.do_spectral_norm)
 
+        with tf.name_scope('Testing'):
+
+            with tf.variable_scope('Scores'):
+                score_ch = tf.nn.sigmoid_cross_entropy_with_logits(
+                    labels=tf.ones_like(l_generator_emaxx),
+                    logits=l_generator_emaxx)
+                score_ch = tf.squeeze(score_ch)
+
+                rec = x_pl - rec_x_ema
+                rec = tf.contrib.layers.flatten(rec)
+                score_l1 = tf.norm(rec, ord=1, axis=1,
+                                   keep_dims=False, name='d_loss')
+                score_l1 = tf.squeeze(score_l1)
+
+                rec = x_pl - rec_x_ema
+                rec = tf.contrib.layers.flatten(rec)
+                score_l2 = tf.norm(rec, ord=2, axis=1,
+                                   keep_dims=False, name='d_loss')
+                score_l2 = tf.squeeze(score_l2)
+
+                inter_layer_inp, inter_layer_rct = inter_layer_inp_emaxx, \
+                                                   inter_layer_rct_emaxx
+                fm = inter_layer_inp - inter_layer_rct
+                fm = tf.contrib.layers.flatten(fm)
+                score_fm = tf.norm(fm, ord=config.fm_degree, axis=1,
+                                   keep_dims=False, name='d_loss')
+                score_fm = tf.squeeze(score_fm)
+
         if config.enable_sm:
 
             with tf.name_scope('summary'):
@@ -217,10 +245,6 @@ class ALAD:
                     if config.allow_zz:
                         tf.summary.scalar('loss_encgen_dzz', cost_z, ['gen'])
 
-                if config.enable_early_stop:
-                    with tf.name_scope('validation_summary'):
-                        tf.summary.scalar('valid', rec_error_valid, ['v'])
-
                 with tf.name_scope('img_summary'):
                     heatmap_pl_latent = tf.placeholder(tf.float32,
                                                        shape=(1, 480, 640, 3),
@@ -238,8 +262,15 @@ class ALAD:
     def init_model(self):
         pass
 
-    def pred(self, x):
-        return tf.get_default_session().run(self.y_pred, feed_dict={self.x_in: x})
+    def compute_fm_scores(self, x):
+        feed_dict = {self.x_pl: x,
+                     self.z_pl: np.random.normal(size=[x.shape[0], self.config.latent_dim]),
+                     self.is_training_pl: False}
+
+        with tf.Session as sess:
+            return sess.run(self.score_fm, feed_dict=feed_dict)
+
+
 
     def fit(self, x, max_epoch, logdir):
         saver = tf.train.Saver()
@@ -344,6 +375,9 @@ class ALAD:
                 # end of trainig
                 saver.save(sess, logdir + '/model', global_step=step)
 
+    def load(self, file):
+        saver = tf.train.Saver()
+        saver.restore(self.sess, file)
 
 def get_getter(ema):  # to update neural net with moving avg variables, suitable for ss learning cf Saliman
     def ema_getter(getter, name, *args, **kwargs):

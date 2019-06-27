@@ -9,7 +9,7 @@ class BasicNNAnomalyDetector(skeleton.AbstractAnomalyDetector):
         self.model = model
 
     @abstractmethod
-    def get_anomaly_probability(self, x): pass
+    def get_anomaly_scores(self, x): pass
 
     def save(self, path): pass
 

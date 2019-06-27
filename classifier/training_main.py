@@ -3,12 +3,10 @@ import shutil
 
 from keras.models import Model
 
-from main_pc import training_config as cfg
-
-from evaluation.basic_evaluator import BasicEvaluator
-from classifier.mlp_binary_classifier_trainer import SupervisedNNTrainer
-
 from data.raw_loader import *
+
+import classifier.training_config as cfg
+from classifier.mlp_binary_classifier_trainer import SupervisedNNTrainer
 from classifier.mlp_binary_classifier import MlpBinaryClassificationAgent
 
 if __name__ == '__main__':
@@ -21,28 +19,15 @@ if __name__ == '__main__':
 
     print('---------- LOADING DATA ----------')
     data = np.load(cfg.data_path, allow_pickle=True).item()
-    x_train, y_train, x_eval, y_eval = data['x_train'], data['y_train'], data['x_eval'], data['y_eval']
+    x, y = data['x'], data['y']
 
-    print('---------- PRE-PROCESS DATA ----------')
-
-    print('training data shapes:' + str(x_train.shape))
-    print('training labels shapes:' + str(y_train.shape))
-    print('evaluation data shapes:' + str(x_eval.shape))
-    print('evaluation labels shapes:' + str(y_eval.shape))
-
-    # perform data augmentation
-    if cfg.enable_augmentation:
-        # todo:
-        # print('augmenting training data...')
-        # x_train, y_train = datautils.augment_data(x_train, y_train, cfg.augmentation_mask, cfg.augmentation_factor,cfg.noise_amplitude)
-        pass
-
-    print('training data shapes:' + str(x_train.shape))
+    print('training data shapes:' + str(x.shape))
+    print('training labels shapes:' + str(y.shape))
 
     print('---------- INITIALIZE TRAINING ----------')
 
     # get model architecture and compile it
-    inputs, outputs = cfg.get_model_architecture([(x_train.shape[1],)])
+    inputs, outputs = cfg.get_model_architecture([(x.shape[1],)])
     model = Model(inputs=inputs, outputs=outputs)
     model.compile(optimizer=cfg.optimizer, loss=cfg.loss, metrics=['accuracy'])
 
@@ -76,19 +61,13 @@ if __name__ == '__main__':
     # save model config as yaml
     anomaly_detector.save_model_as_yaml(os.path.join(result_dir, 'model.yaml'))
 
-    # save model summary
-    # sys.stdout = open(os.path.join(result_dir, 'model.txt'), 'w')
-    # anomaly_detector.model.summary()
-    # sys.stdout = sys.__stdout__
-
     # print a summary of model
     model.summary()
 
     print('---------- STARTING TRAINING ----------')
 
     # instantiate evaluator and trainer
-    evaluator = BasicEvaluator(x_eval, y_eval)
-    trainer = SupervisedNNTrainer(x_train, y_train, evaluator, cfg, result_dir)
+    trainer = SupervisedNNTrainer(x, y, None, cfg, result_dir)
 
     # train
     trainer.train(anomaly_detector)

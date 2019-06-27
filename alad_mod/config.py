@@ -25,6 +25,8 @@ enable_sm = True
 do_spectral_norm = True
 allow_zz = True
 
+fm_degree = 1
+
 # result
 result_path = '/home/oliverkn/pro/results'
 

@@ -61,5 +61,6 @@ class Callback(keras.callbacks.Callback):
         print('saving weights...')
         self.agent.save_weights(os.path.join(self.result_dir, str(epoch) + '_weights.h5'))
 
-        # print('evaluating...')
-        # self.evaluator.evaluate(self.agent, epoch, logs, self.result_dir)
+        if not self.evaluator is None:
+            print('evaluating...')
+            self.evaluator.evaluate(self.agent, epoch, logs, self.result_dir)

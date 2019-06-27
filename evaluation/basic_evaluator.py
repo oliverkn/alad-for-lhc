@@ -17,8 +17,9 @@ class BasicEvaluator(AbstractEvaluator):
 
         self.hist = {}
         self.hist['epoch'] = []
-        self.hist['acc'] = []
-        self.hist['loss'] = []
+        self.hist['accuracy'] = []
+        self.hist['precission'] = []
+        self.hist['f1_score'] = []
         self.hist['auc'] = []
         self.hist['roc'] = []
 
@@ -28,7 +29,7 @@ class BasicEvaluator(AbstractEvaluator):
         pass
 
     # used for online evaluation
-    def evaluate(self, anomaly_detector, epoch, logs, path):
+    def evaluate(self, anomaly_detector, epoch, logs):
         self.hist['epoch'].append(epoch)
 
         # append logs
@@ -38,18 +39,29 @@ class BasicEvaluator(AbstractEvaluator):
                     self.logs_hist[key] = []
                 self.logs_hist[key].append(value)
 
-        np.save(join(path, 'logs.npy'), self.hist, allow_pickle=True)
-
         # compute evaluate metrics for eval set
-        eval_logs = anomaly_detector.model.evaluate(self.x, self.y)
-        self.hist['loss'].append(eval_logs[0])
-        self.hist['acc'].append(eval_logs[1])
+        # eval_logs = anomaly_detector.model.evaluate(self.x, self.y)
+        # self.hist['loss'].append(eval_logs[0])
+        # self.hist['acc'].append(eval_logs[1])
 
-        # compute roc
-        anomaly_prob = anomaly_detector.get_anomaly_probability(self.x)
+        # compute metrics
+        anomaly_prob = anomaly_detector.get_anomaly_scores(self.x)
+
+        # accuracy = sklearn.metrics.accuracy_score(self.y, anomaly_prob)
+        accuracy = 0
+        # precission = sklearn.metrics.precision_score(self.y, anomaly_prob, pos_label=1)
+        precission = 0
+        # f1_score = sklearn.metrics.f1_score(self.y, anomaly_prob, pos_label=1)
+        f1_score = 0
         roc = sklearn.metrics.roc_curve(self.y, anomaly_prob, pos_label=1)
         auc = sklearn.metrics.roc_auc_score(self.y, anomaly_prob)
-        self.hist['roc'].append(roc)
-        self.hist['auc'].append(auc)
 
+        self.hist['accuracy'].append(accuracy)
+        self.hist['precission'].append(precission)
+        self.hist['f1_score'].append(f1_score)
+        self.hist['auc'].append(auc)
+        self.hist['roc'].append(roc)
+
+    def save_results(self, path):
         np.save(join(path, 'metrics.npy'), self.hist, allow_pickle=True)
+        np.save(join(path, 'logs.npy'), self.logs_hist, allow_pickle=True)

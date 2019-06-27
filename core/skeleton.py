@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 class AbstractAnomalyDetector(ABC):
     @abstractmethod
-    def get_anomaly_probability(self, x): pass
+    def get_anomaly_scores(self, x): pass
 
     @abstractmethod
     def save(self, path): pass
