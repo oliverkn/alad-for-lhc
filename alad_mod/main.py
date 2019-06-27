@@ -41,10 +41,10 @@ if __name__ == '__main__':
     if not os.path.exists(result_dir):
         os.makedirs(result_dir)
 
+    # copy python files
+    shutil.copytree('.', os.path.join(result_dir, 'python'))
+
     print('---------- STARTING TRAINING ----------')
-
-    # sv = tf.train.Supervisor(logdir=result_dir, save_summaries_secs=None)
-
     with tf.Session() as sess:
         alad = ALAD(config, sess)
         evaluator = BasicEvaluator(x_valid, y_valid)
