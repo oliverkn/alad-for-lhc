@@ -9,13 +9,14 @@ import tensorflow as tf
 from alad_mod import sn
 
 # --------------------------------DATA--------------------------------
-data_path = '/home/oliverkn/pro/data/full.npy'
+train_data_file = '/home/oliverkn/pro/data/1_1/train_sm_only.npy'
+valid_data_file = '/home/oliverkn/pro/data/1_1/valid_supervised.npy'
 
 # --------------------------------TRAINER--------------------------------
 learning_rate = 1e-5
 batch_size = 50
 input_dim = 23
-latent_dim = 6
+latent_dim = 4
 init_kernel = tf.contrib.layers.xavier_initializer()
 ema_decay = 0.999
 max_epoch = 100
@@ -27,8 +28,11 @@ allow_zz = True
 
 fm_degree = 1
 
+max_valid_samples = 10000
+max_train_samples = 500_000
+
 # result
-result_path = '/home/oliverkn/pro/results'
+result_path = '/home/oliverkn/pro/results/1_1/alad/'
 
 
 def leakyReLu(x, alpha=0.2, name=None):

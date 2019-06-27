@@ -1,34 +1,33 @@
 import os
 import shutil
 
+import tensorflow as tf
+
 from alad_mod import config
 from alad_mod.alad import ALAD
 
 from data.raw_loader import *
+from evaluation.basic_evaluator import BasicEvaluator
 
 if __name__ == '__main__':
     print('---------- LOADING DATA ----------')
-    data = np.load(config.data_path, allow_pickle=True).item()
-    x_train, y_train, x_eval, y_eval = data['x_train'], data['y_train'], data['x_eval'], data['y_eval']
+    x = np.load(config.train_data_file, allow_pickle=True)
+    data_valid = np.load(config.valid_data_file, allow_pickle=True).item()
+    x_valid, y_valid = data_valid['x'], data_valid['y']
 
-    print('training data shapes:' + str(x_train.shape))
-    print('evaluation data shapes:' + str(x_eval.shape))
+    print('training data shapes:' + str(x.shape))
+    print('evaluation data shapes:' + str(x_valid.shape))
 
-    print('---------- INITIALIZE TRAINING ----------')
+    if x.shape[0] > config.max_train_samples:
+        print('taking subset for training')
+        x = x[:config.max_train_samples]
 
-    # get model architecture and compile it
+    if x_valid.shape[0] > config.max_valid_samples:
+        print('taking subset for validation')
+        x_valid, y_valid = x_valid[:config.max_valid_samples], y_valid[:config.max_valid_samples]
 
-    alad = ALAD(config)
-
-    # loading model if set
-    # if cfg.model_file is not None:
-    #     print('loading model: ' + cfg.model_file)
-    #     anomaly_detector.load(cfg.model_file)
-
-    # load initial weights if set
-    # elif cfg.weights_file is not None:
-    #     print('loading weights: ' + cfg.model_file)
-    #     anomaly_detector.load_weights(cfg.model_file)
+    print('training data shapes:' + str(x.shape))
+    print('evaluation data shapes:' + str(x_valid.shape))
 
     print('---------- CREATING RESULT DIRECTORY ----------')
 
@@ -44,5 +43,9 @@ if __name__ == '__main__':
 
     print('---------- STARTING TRAINING ----------')
 
-    # instantiate evaluator and trainer
-    alad.fit(x_train, max_epoch=config.max_epoch, logdir=result_dir)
+    # sv = tf.train.Supervisor(logdir=result_dir, save_summaries_secs=None)
+
+    with tf.Session() as sess:
+        alad = ALAD(config, sess)
+        evaluator = BasicEvaluator(x_valid, y_valid)
+        alad.fit(x, evaluator=evaluator, max_epoch=config.max_epoch, logdir=result_dir)

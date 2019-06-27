@@ -9,8 +9,8 @@ from classifier.mlp_binary_classifier import MlpBinaryClassificationAgent
 
 # paths
 eval_name = 'valid'
-result_path = '/home/oliverkn/pro/results/1_1/mlp_binary/1/'
-data_file = '/home/oliverkn/pro/data/1_1/valid_supervised.npy'
+result_path = '/home/oliverkn/pro/results/4_4/mlp_binary/1/'
+data_file = '/home/oliverkn/pro/data/4_4/valid_supervised.npy'
 model_file = result_path + '{}_weights.h5'
 
 # parameters

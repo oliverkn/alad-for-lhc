@@ -11,9 +11,10 @@ from core.skeleton import *
 logger = logging.getLogger("ALAD")
 
 
-class ALAD:
-    def __init__(self, config):
+class ALAD(AbstractAnomalyDetector):
+    def __init__(self, config, sess):
         self.config = config
+        self.sess = sess
 
         # Parameters
         starting_lr = config.learning_rate
@@ -259,125 +260,137 @@ class ALAD:
 
         self.__dict__.update(locals())
 
-    def init_model(self):
-        pass
-
     def compute_fm_scores(self, x):
         feed_dict = {self.x_pl: x,
                      self.z_pl: np.random.normal(size=[x.shape[0], self.config.latent_dim]),
                      self.is_training_pl: False}
 
-        with tf.Session as sess:
-            return sess.run(self.score_fm, feed_dict=feed_dict)
+        return self.sess.run(self.score_fm, feed_dict=feed_dict)
 
+    def get_anomaly_scores(self, x):
+        return self.compute_fm_scores(x)
 
-
-    def fit(self, x, max_epoch, logdir):
+    def fit(self, x, max_epoch, logdir, evaluator):
         saver = tf.train.Saver()
 
-        tf_config = tf.ConfigProto()
-        tf_config.gpu_options.allow_growth = True
+        # tf_config = tf.ConfigProto()
+        # tf_config.gpu_options.allow_growth = True
 
         logger.info('Start training...')
 
-        sv = tf.train.Supervisor(logdir=logdir, save_summaries_secs=None, saver=saver)
+        # sv = tf.train.Supervisor(logdir=logdir, save_summaries_secs=None, saver=saver)
+        #
+        # with sv.managed_session(config=tf_config) as sess:
 
-        with sv.managed_session(config=tf_config) as sess:
+        sess = self.sess
 
-            step = sess.run(self.global_step)
-            writer = tf.summary.FileWriter(logdir, sess.graph)
-            train_batch = 0
+        sess.run(tf.global_variables_initializer())
+        sess.run(tf.assign(self.global_step, 0))
 
-            batch_size = self.config.batch_size
-            nr_batches_train = int(x.shape[0] / batch_size)
+        step = sess.run(self.global_step)
 
-            # EPOCHS
-            for epoch in range(max_epoch):
+        writer = tf.summary.FileWriter(logdir, sess.graph)
+        train_batch = 0
 
-                lr = self.config.learning_rate
-                begin = time.time()
+        batch_size = self.config.batch_size
+        nr_batches_train = int(x.shape[0] / batch_size)
 
-                # construct randomly permuted minibatches
-                trainx = sklearn.utils.shuffle(x)
-                trainx_copy = sklearn.utils.shuffle(x)
+        # EPOCHS
+        for epoch in range(max_epoch):
 
-                train_loss_dis_xz, train_loss_dis_xx, train_loss_dis_zz, \
-                train_loss_dis, train_loss_gen, train_loss_enc = [0, 0, 0, 0, 0, 0]
+            lr = self.config.learning_rate
+            begin = time.time()
 
-                # fit one batch
-                for t in range(nr_batches_train):
-                    display_progression_epoch(t, nr_batches_train)
-                    ran_from = t * batch_size
-                    ran_to = (t + 1) * batch_size
+            # construct randomly permuted minibatches
+            trainx = sklearn.utils.shuffle(x)
+            trainx_copy = sklearn.utils.shuffle(x)
 
-                    # train discriminator
-                    feed_dict = {self.x_pl: trainx[ran_from:ran_to],
-                                 self.z_pl: np.random.normal(size=[batch_size, self.config.latent_dim]),
-                                 self.is_training_pl: True,
-                                 self.learning_rate: lr}
+            train_loss_dis_xz, train_loss_dis_xx, train_loss_dis_zz, \
+            train_loss_dis, train_loss_gen, train_loss_enc = [0, 0, 0, 0, 0, 0]
 
-                    _, _, _, ld, ldxz, ldxx, ldzz, step = sess.run([self.train_dis_op_xz,
-                                                                    self.train_dis_op_xx,
-                                                                    self.train_dis_op_zz,
-                                                                    self.loss_discriminator,
-                                                                    self.dis_loss_xz,
-                                                                    self.dis_loss_xx,
-                                                                    self.dis_loss_zz,
-                                                                    self.global_step],
-                                                                   feed_dict=feed_dict)
-                    train_loss_dis += ld
-                    train_loss_dis_xz += ldxz
-                    train_loss_dis_xx += ldxx
-                    train_loss_dis_zz += ldzz
+            # fit one batch
+            for t in range(nr_batches_train):
+                display_progression_epoch(t, nr_batches_train)
+                ran_from = t * batch_size
+                ran_to = (t + 1) * batch_size
 
-                    # train generator and encoder
-                    feed_dict = {self.x_pl: trainx_copy[ran_from:ran_to],
-                                 self.z_pl: np.random.normal(size=[batch_size, self.config.latent_dim]),
-                                 self.is_training_pl: True,
-                                 self.learning_rate: lr}
-                    _, _, le, lg = sess.run([self.train_gen_op,
-                                             self.train_enc_op,
-                                             self.loss_encoder,
-                                             self.loss_generator],
-                                            feed_dict=feed_dict)
-                    train_loss_gen += lg
-                    train_loss_enc += le
+                # train discriminator
+                feed_dict = {self.x_pl: trainx[ran_from:ran_to],
+                             self.z_pl: np.random.normal(size=[batch_size, self.config.latent_dim]),
+                             self.is_training_pl: True,
+                             self.learning_rate: lr}
 
-                    if self.config.enable_sm:
-                        sm = sess.run(self.sum_op, feed_dict=feed_dict)
-                        writer.add_summary(sm, step)
+                _, _, _, ld, ldxz, ldxx, ldzz, step = sess.run([self.train_dis_op_xz,
+                                                                self.train_dis_op_xx,
+                                                                self.train_dis_op_zz,
+                                                                self.loss_discriminator,
+                                                                self.dis_loss_xz,
+                                                                self.dis_loss_xx,
+                                                                self.dis_loss_zz,
+                                                                self.global_step],
+                                                               feed_dict=feed_dict)
+                train_loss_dis += ld
+                train_loss_dis_xz += ldxz
+                train_loss_dis_xx += ldxx
+                train_loss_dis_zz += ldzz
 
-                    train_batch += 1
+                # train generator and encoder
+                feed_dict = {self.x_pl: trainx_copy[ran_from:ran_to],
+                             self.z_pl: np.random.normal(size=[batch_size, self.config.latent_dim]),
+                             self.is_training_pl: True,
+                             self.learning_rate: lr}
+                _, _, le, lg = sess.run([self.train_gen_op,
+                                         self.train_enc_op,
+                                         self.loss_encoder,
+                                         self.loss_generator],
+                                        feed_dict=feed_dict)
+                train_loss_gen += lg
+                train_loss_enc += le
 
-                # end of epoch
-                train_loss_gen /= nr_batches_train
-                train_loss_enc /= nr_batches_train
-                train_loss_dis /= nr_batches_train
-                train_loss_dis_xz /= nr_batches_train
-                train_loss_dis_xx /= nr_batches_train
-                train_loss_dis_zz /= nr_batches_train
+                if self.config.enable_sm:
+                    sm = sess.run(self.sum_op, feed_dict=feed_dict)
+                    writer.add_summary(sm, step)
 
-                logger.info('Epoch terminated')
-                if self.config.allow_zz:
-                    print("Epoch %d | time = %ds | loss gen = %.4f | loss enc = %.4f | "
-                          "loss dis = %.4f | loss dis xz = %.4f | loss dis xx = %.4f | "
-                          "loss dis zz = %.4f"
-                          % (epoch, time.time() - begin, train_loss_gen,
-                             train_loss_enc, train_loss_dis, train_loss_dis_xz,
-                             train_loss_dis_xx, train_loss_dis_zz))
-                else:
-                    print("Epoch %d | time = %ds | loss gen = %.4f | loss enc = %.4f | "
-                          "loss dis = %.4f | loss dis xz = %.4f | loss dis xx = %.4f | "
-                          % (epoch, time.time() - begin, train_loss_gen,
-                             train_loss_enc, train_loss_dis, train_loss_dis_xz,
-                             train_loss_dis_xx))
+                train_batch += 1
 
-                # end of trainig
-                saver.save(sess, logdir + '/model', global_step=step)
+            # end of epoch
+            train_loss_gen /= nr_batches_train
+            train_loss_enc /= nr_batches_train
+            train_loss_dis /= nr_batches_train
+            train_loss_dis_xz /= nr_batches_train
+            train_loss_dis_xx /= nr_batches_train
+            train_loss_dis_zz /= nr_batches_train
+
+            logger.info('Epoch terminated')
+            if self.config.allow_zz:
+                print("Epoch %d | time = %ds | loss gen = %.4f | loss enc = %.4f | "
+                      "loss dis = %.4f | loss dis xz = %.4f | loss dis xx = %.4f | "
+                      "loss dis zz = %.4f"
+                      % (epoch, time.time() - begin, train_loss_gen,
+                         train_loss_enc, train_loss_dis, train_loss_dis_xz,
+                         train_loss_dis_xx, train_loss_dis_zz))
+            else:
+                print("Epoch %d | time = %ds | loss gen = %.4f | loss enc = %.4f | "
+                      "loss dis = %.4f | loss dis xz = %.4f | loss dis xx = %.4f | "
+                      % (epoch, time.time() - begin, train_loss_gen,
+                         train_loss_enc, train_loss_dis, train_loss_dis_xz,
+                         train_loss_dis_xx))
+
+            logger.info('saving model')
+            saver.save(sess, logdir + '/model', global_step=step)
+
+            if evaluator is not None:
+                print('evaluating...')
+                evaluator.evaluate(self, epoch, {})
+                evaluator.save_results(logdir)
 
     def load(self, file):
         saver = tf.train.Saver()
         saver.restore(self.sess, file)
+
+    def save(self, path):
+        pass
+
 
 def get_getter(ema):  # to update neural net with moving avg variables, suitable for ss learning cf Saliman
     def ema_getter(getter, name, *args, **kwargs):

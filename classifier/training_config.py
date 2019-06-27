@@ -14,14 +14,14 @@ model_file = None
 weights_file = None
 
 # --------------------------------DATA--------------------------------
-data_path = '/home/oliverkn/pro/data/1_1/train_supervised.npy'
+data_path = '/home/oliverkn/pro/data/4_4/train_supervised.npy'
 
 # --------------------------------TRAINER--------------------------------
 batch_size = 256
 max_epochs = 501
 
 # result
-result_path = '/home/oliverkn/pro/results/1_1/mlp_binary'
+result_path = '/home/oliverkn/pro/results/4_4/mlp_binary'
 
 remote_training = False
 remote_address = '35.188.95.78:2223'
