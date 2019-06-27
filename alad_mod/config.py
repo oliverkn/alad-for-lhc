@@ -1,31 +1,33 @@
 import tensorflow as tf
 
 # --------------------------------DATA--------------------------------
-train_data_file = '/home/oliverkn/pro/data/1_1/train_sm_only.npy'
-valid_data_file = '/home/oliverkn/pro/data/1_1/valid_supervised.npy'
+train_data_file = '/home/oliverkn/pro/data/4_4/train_sm_only.npy'
+valid_data_file = '/home/oliverkn/pro/data/4_4/valid_supervised.npy'
 
-# --------------------------------TRAINER--------------------------------
-learning_rate = 1e-5
-batch_size = 50
+result_path = '/home/oliverkn/pro/results/4_4/alad/'
+
+# --------------------------------HYPERPARAMETERS--------------------------------
 input_dim = 23
 latent_dim = 4
+
+learning_rate = 1e-5
+batch_size = 50
 init_kernel = tf.contrib.layers.xavier_initializer()
 ema_decay = 0.999
+do_spectral_norm = True
+allow_zz = True
+fm_degree = 1
+
+max_valid_samples = 50_000
+max_train_samples = 1e20  # inf
+
 max_epoch = 1000
 enable_early_stop = False
 enable_sm = True
+checkpoint_freq = 2_000  # number of batches
 
-do_spectral_norm = True
-allow_zz = True
 
-fm_degree = 1
-
-max_valid_samples = 20_000
-max_train_samples = 100_000
-
-# result
-result_path = '/home/oliverkn/pro/results/1_1/alad/'
-
+# --------------------------------MODELS--------------------------------
 
 def leakyReLu(x, alpha=0.2, name=None):
     if name:

@@ -271,29 +271,21 @@ class ALAD(AbstractAnomalyDetector):
         return self.compute_fm_scores(x)
 
     def fit(self, x, max_epoch, logdir, evaluator):
-        saver = tf.train.Saver(max_to_keep=100)
-
-
-
-
-
-
-
         sess = self.sess
+        saver = tf.train.Saver(max_to_keep=1000)
+        writer = tf.summary.FileWriter(logdir, sess.graph)
 
+        # run initialization
         sess.run(tf.global_variables_initializer())
         sess.run(tf.assign(self.global_step, 0))
 
-        step = sess.run(self.global_step)
-
-        writer = tf.summary.FileWriter(logdir, sess.graph)
-        train_batch = 0
+        # training loop variables
+        checkpoint = 0
 
         batch_size = self.config.batch_size
         nr_batches_train = int(x.shape[0] / batch_size)
 
         print('Start training...')
-
         # EPOCHS
         for epoch in range(max_epoch):
             print('---------- EPOCH %s ----------' % epoch)
@@ -346,11 +338,25 @@ class ALAD(AbstractAnomalyDetector):
                 train_loss_gen += lg
                 train_loss_enc += le
 
+                # end of batch
+
                 if self.config.enable_sm:
                     sm = sess.run(self.sum_op, feed_dict=feed_dict)
                     writer.add_summary(sm, step)
 
-                train_batch += 1
+                if step % self.config.checkpoint_freq != 0: continue
+                # checkpoint stuff:
+
+
+                print('saving checkpoint %s' % checkpoint)
+                saver.save(sess, logdir + '/model', global_step=checkpoint)
+
+                if evaluator is not None:
+                    print('evaluating checkpoint %s' % checkpoint)
+                    evaluator.evaluate(self, checkpoint, {})
+                    evaluator.save_results(logdir)
+
+                checkpoint += 1
 
             # end of epoch
             train_loss_gen /= nr_batches_train
@@ -373,14 +379,6 @@ class ALAD(AbstractAnomalyDetector):
                       % (epoch, time.time() - begin, train_loss_gen,
                          train_loss_enc, train_loss_dis, train_loss_dis_xz,
                          train_loss_dis_xx))
-
-            print('saving epoch %s' % epoch)
-            saver.save(sess, logdir + '/model', global_step=epoch)
-
-            if evaluator is not None:
-                print('evaluating epoch %s' % epoch)
-                evaluator.evaluate(self, epoch, {})
-                evaluator.save_results(logdir)
 
     def load(self, file):
         saver = tf.train.Saver()
