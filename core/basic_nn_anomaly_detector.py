@@ -13,7 +13,7 @@ class BasicNNAnomalyDetector(skeleton.AbstractAnomalyDetector):
 
     def save(self, path): pass
 
-    def load(self, path): pass
+    def load(self, path): self.load_weights(path)
 
     def save_weights(self, file):
         self.model.save_weights(file)

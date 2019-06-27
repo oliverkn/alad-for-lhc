@@ -21,13 +21,13 @@ batch_size = 256
 max_epochs = 501
 
 # result
-result_path = '/home/oliverkn/pro/results/classifier_1_1'
+result_path = '/home/oliverkn/pro/results/1_1/mlp_binary'
 
 remote_training = False
 remote_address = '35.188.95.78:2223'
 
 # --------------------------------MODEL--------------------------------
-learning_rate = 0.001
+learning_rate = 1e-5
 optimizer = Adam(lr=learning_rate)
 loss = binary_crossentropy
 

@@ -64,3 +64,4 @@ class Callback(keras.callbacks.Callback):
         if not self.evaluator is None:
             print('evaluating...')
             self.evaluator.evaluate(self.agent, epoch, logs, self.result_dir)
+            self.evaluator.save_results(self.result_dir)
