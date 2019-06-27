@@ -1,12 +1,4 @@
-"""
-
-KDD ALAD architecture.
-
-Generator (decoder), encoder and discriminator.
-
-"""
 import tensorflow as tf
-from alad_mod import sn
 
 # --------------------------------DATA--------------------------------
 train_data_file = '/home/oliverkn/pro/data/1_1/train_sm_only.npy'
@@ -19,7 +11,7 @@ input_dim = 23
 latent_dim = 4
 init_kernel = tf.contrib.layers.xavier_initializer()
 ema_decay = 0.999
-max_epoch = 100
+max_epoch = 1000
 enable_early_stop = False
 enable_sm = True
 
@@ -28,8 +20,8 @@ allow_zz = True
 
 fm_degree = 1
 
-max_valid_samples = 10000
-max_train_samples = 500_000
+max_valid_samples = 20_000
+max_train_samples = 100_000
 
 # result
 result_path = '/home/oliverkn/pro/results/1_1/alad/'

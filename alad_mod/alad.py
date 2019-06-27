@@ -271,16 +271,13 @@ class ALAD(AbstractAnomalyDetector):
         return self.compute_fm_scores(x)
 
     def fit(self, x, max_epoch, logdir, evaluator):
-        saver = tf.train.Saver()
+        saver = tf.train.Saver(max_to_keep=100)
 
-        # tf_config = tf.ConfigProto()
-        # tf_config.gpu_options.allow_growth = True
 
-        logger.info('Start training...')
 
-        # sv = tf.train.Supervisor(logdir=logdir, save_summaries_secs=None, saver=saver)
-        #
-        # with sv.managed_session(config=tf_config) as sess:
+
+
+
 
         sess = self.sess
 
@@ -295,13 +292,15 @@ class ALAD(AbstractAnomalyDetector):
         batch_size = self.config.batch_size
         nr_batches_train = int(x.shape[0] / batch_size)
 
+        print('Start training...')
+
         # EPOCHS
         for epoch in range(max_epoch):
+            print('---------- EPOCH %s ----------' % epoch)
 
-            lr = self.config.learning_rate
             begin = time.time()
 
-            # construct randomly permuted minibatches
+            # construct randomly shuffled batches
             trainx = sklearn.utils.shuffle(x)
             trainx_copy = sklearn.utils.shuffle(x)
 
@@ -318,7 +317,7 @@ class ALAD(AbstractAnomalyDetector):
                 feed_dict = {self.x_pl: trainx[ran_from:ran_to],
                              self.z_pl: np.random.normal(size=[batch_size, self.config.latent_dim]),
                              self.is_training_pl: True,
-                             self.learning_rate: lr}
+                             self.learning_rate: self.config.learning_rate}
 
                 _, _, _, ld, ldxz, ldxx, ldzz, step = sess.run([self.train_dis_op_xz,
                                                                 self.train_dis_op_xx,
@@ -338,7 +337,7 @@ class ALAD(AbstractAnomalyDetector):
                 feed_dict = {self.x_pl: trainx_copy[ran_from:ran_to],
                              self.z_pl: np.random.normal(size=[batch_size, self.config.latent_dim]),
                              self.is_training_pl: True,
-                             self.learning_rate: lr}
+                             self.learning_rate: self.config.learning_rate}
                 _, _, le, lg = sess.run([self.train_gen_op,
                                          self.train_enc_op,
                                          self.loss_encoder,
@@ -361,7 +360,6 @@ class ALAD(AbstractAnomalyDetector):
             train_loss_dis_xx /= nr_batches_train
             train_loss_dis_zz /= nr_batches_train
 
-            logger.info('Epoch terminated')
             if self.config.allow_zz:
                 print("Epoch %d | time = %ds | loss gen = %.4f | loss enc = %.4f | "
                       "loss dis = %.4f | loss dis xz = %.4f | loss dis xx = %.4f | "
@@ -376,11 +374,11 @@ class ALAD(AbstractAnomalyDetector):
                          train_loss_enc, train_loss_dis, train_loss_dis_xz,
                          train_loss_dis_xx))
 
-            logger.info('saving model')
-            saver.save(sess, logdir + '/model', global_step=step)
+            print('saving epoch %s' % epoch)
+            saver.save(sess, logdir + '/model', global_step=epoch)
 
             if evaluator is not None:
-                print('evaluating...')
+                print('evaluating epoch %s' % epoch)
                 evaluator.evaluate(self, epoch, {})
                 evaluator.save_results(logdir)
 
