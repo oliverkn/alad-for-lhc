@@ -11,7 +11,7 @@ input_dim = 23
 latent_dim = 4
 
 learning_rate = 1e-5
-batch_size = 50
+batch_size = 100
 init_kernel = tf.contrib.layers.xavier_initializer()
 ema_decay = 0.999
 do_spectral_norm = True
@@ -19,12 +19,24 @@ allow_zz = True
 fm_degree = 1
 
 max_valid_samples = 50_000
-max_train_samples = 1e20  # inf
+max_train_samples = 500_000  # inf
+
+# --------------------------------TRAIN_SETTINGS--------------------------------
+load_model = False
+model_file = ''
 
 max_epoch = 1000
-enable_early_stop = False
+
+sm_write_freq = 100  # number of batches
+eval_freq = 1_000
+checkpoint_freq = 2_000
+
 enable_sm = True
-checkpoint_freq = 2_000  # number of batches
+enable_eval = True
+enable_checkpoint_save = True
+
+# evaluation
+enable_roc = False
 
 
 # --------------------------------MODELS--------------------------------

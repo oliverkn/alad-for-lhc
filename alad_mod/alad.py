@@ -246,12 +246,6 @@ class ALAD(AbstractAnomalyDetector):
                     if config.allow_zz:
                         tf.summary.scalar('loss_encgen_dzz', cost_z, ['gen'])
 
-                with tf.name_scope('img_summary'):
-                    heatmap_pl_latent = tf.placeholder(tf.float32,
-                                                       shape=(1, 480, 640, 3),
-                                                       name="heatmap_pl_latent")
-                    sum_op_latent = tf.summary.image('heatmap_latent', heatmap_pl_latent)
-
                 sum_op_dis = tf.summary.merge_all('dis')
                 sum_op_gen = tf.summary.merge_all('gen')
                 sum_op = tf.summary.merge([sum_op_dis, sum_op_gen])
@@ -270,17 +264,17 @@ class ALAD(AbstractAnomalyDetector):
     def get_anomaly_scores(self, x):
         return self.compute_fm_scores(x)
 
-    def fit(self, x, max_epoch, logdir, evaluator):
+    def fit(self, x, max_epoch, logdir, evaluator, model_file=None):
         sess = self.sess
         saver = tf.train.Saver(max_to_keep=1000)
         writer = tf.summary.FileWriter(logdir, sess.graph)
 
-        # run initialization
-        sess.run(tf.global_variables_initializer())
-        sess.run(tf.assign(self.global_step, 0))
-
-        # training loop variables
-        checkpoint = 0
+        if model_file is None:
+            # run initialization
+            sess.run(tf.global_variables_initializer())
+            sess.run(tf.assign(self.global_step, 0))
+        else:
+            self.load(model_file)
 
         batch_size = self.config.batch_size
         nr_batches_train = int(x.shape[0] / batch_size)
@@ -296,12 +290,8 @@ class ALAD(AbstractAnomalyDetector):
             trainx = sklearn.utils.shuffle(x)
             trainx_copy = sklearn.utils.shuffle(x)
 
-            train_loss_dis_xz, train_loss_dis_xx, train_loss_dis_zz, \
-            train_loss_dis, train_loss_gen, train_loss_enc = [0, 0, 0, 0, 0, 0]
-
             # fit one batch
             for t in range(nr_batches_train):
-                display_progression_epoch(t, nr_batches_train)
                 ran_from = t * batch_size
                 ran_to = (t + 1) * batch_size
 
@@ -311,74 +301,38 @@ class ALAD(AbstractAnomalyDetector):
                              self.is_training_pl: True,
                              self.learning_rate: self.config.learning_rate}
 
-                _, _, _, ld, ldxz, ldxx, ldzz, step = sess.run([self.train_dis_op_xz,
-                                                                self.train_dis_op_xx,
-                                                                self.train_dis_op_zz,
-                                                                self.loss_discriminator,
-                                                                self.dis_loss_xz,
-                                                                self.dis_loss_xx,
-                                                                self.dis_loss_zz,
-                                                                self.global_step],
-                                                               feed_dict=feed_dict)
-                train_loss_dis += ld
-                train_loss_dis_xz += ldxz
-                train_loss_dis_xx += ldxx
-                train_loss_dis_zz += ldzz
+                _, _, _, step = sess.run([self.train_dis_op_xz,
+                                          self.train_dis_op_xx,
+                                          self.train_dis_op_zz,
+                                          self.global_step],
+                                         feed_dict=feed_dict)
 
                 # train generator and encoder
                 feed_dict = {self.x_pl: trainx_copy[ran_from:ran_to],
                              self.z_pl: np.random.normal(size=[batch_size, self.config.latent_dim]),
                              self.is_training_pl: True,
                              self.learning_rate: self.config.learning_rate}
-                _, _, le, lg = sess.run([self.train_gen_op,
-                                         self.train_enc_op,
-                                         self.loss_encoder,
-                                         self.loss_generator],
-                                        feed_dict=feed_dict)
-                train_loss_gen += lg
-                train_loss_enc += le
+                sess.run([self.train_gen_op,
+                          self.train_enc_op],
+                         feed_dict=feed_dict)
 
                 # end of batch
-
-                if self.config.enable_sm:
+                if self.config.enable_sm and step % self.config.sm_write_freq == 0:
+                    display_progression_epoch(begin, t, nr_batches_train)
                     sm = sess.run(self.sum_op, feed_dict=feed_dict)
                     writer.add_summary(sm, step)
 
-                if step % self.config.checkpoint_freq != 0: continue
-                # checkpoint stuff:
-
-
-                print('saving checkpoint %s' % checkpoint)
-                saver.save(sess, logdir + '/model', global_step=checkpoint)
-
-                if evaluator is not None:
-                    print('evaluating checkpoint %s' % checkpoint)
-                    evaluator.evaluate(self, checkpoint, {})
+                if self.config.enable_sm and step % self.config.eval_freq == 0:
+                    print('evaluating at step %s' % step)
+                    evaluator.evaluate(self, step, {})
                     evaluator.save_results(logdir)
 
-                checkpoint += 1
+                if self.config.enable_checkpoint_save and step % self.config.checkpoint_freq == 0:
+                    print('saving checkpoint at step %s' % step)
+                    saver.save(sess, logdir + '/model', global_step=step)
 
             # end of epoch
-            train_loss_gen /= nr_batches_train
-            train_loss_enc /= nr_batches_train
-            train_loss_dis /= nr_batches_train
-            train_loss_dis_xz /= nr_batches_train
-            train_loss_dis_xx /= nr_batches_train
-            train_loss_dis_zz /= nr_batches_train
-
-            if self.config.allow_zz:
-                print("Epoch %d | time = %ds | loss gen = %.4f | loss enc = %.4f | "
-                      "loss dis = %.4f | loss dis xz = %.4f | loss dis xx = %.4f | "
-                      "loss dis zz = %.4f"
-                      % (epoch, time.time() - begin, train_loss_gen,
-                         train_loss_enc, train_loss_dis, train_loss_dis_xz,
-                         train_loss_dis_xx, train_loss_dis_zz))
-            else:
-                print("Epoch %d | time = %ds | loss gen = %.4f | loss enc = %.4f | "
-                      "loss dis = %.4f | loss dis xz = %.4f | loss dis xx = %.4f | "
-                      % (epoch, time.time() - begin, train_loss_gen,
-                         train_loss_enc, train_loss_dis, train_loss_dis_xz,
-                         train_loss_dis_xx))
+            print("Epoch %d | time = %ds" % (epoch, time.time() - begin))
 
     def load(self, file):
         saver = tf.train.Saver()
@@ -397,32 +351,8 @@ def get_getter(ema):  # to update neural net with moving avg variables, suitable
     return ema_getter
 
 
-def display_parameters(batch_size, starting_lr, ema_decay, degree, label,
-                       allow_zz, score_method, do_spectral_norm):
-    """See parameters
-    """
-    print('Batch size: ', batch_size)
-    print('Starting learning rate: ', starting_lr)
-    print('EMA Decay: ', ema_decay)
-    print('Degree for L norms: ', degree)
-    print('Anomalous label: ', label)
-    print('Score method: ', score_method)
-    print('Discriminator zz enabled: ', allow_zz)
-    print('Spectral Norm enabled: ', do_spectral_norm)
-
-
-def display_progression_epoch(j, id_max):
-    """See epoch progression
-    """
+def display_progression_epoch(start_time, j, id_max):
     batch_progression = int((j / id_max) * 100)
-    sys.stdout.write(str(batch_progression) + ' % epoch' + chr(13))
+    sys.stdout.write('time: %s sec | progression: %s / %s (%s %%)' %
+                     (int(time.time() - start_time), j, id_max, batch_progression) + chr(13))
     _ = sys.stdout.flush
-
-
-def create_logdir(dataset, label, rd,
-                  allow_zz, score_method, do_spectral_norm):
-    """ Directory to save training logs, weights, biases, etc."""
-    model = 'alad_sn{}_dzz{}'.format(do_spectral_norm, allow_zz)
-    return "train_logs/{}/{}/dzzenabled{}/{}/label{}/" \
-           "rd{}".format(dataset, model, allow_zz,
-                         score_method, label, rd)
