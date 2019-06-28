@@ -17,7 +17,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.mode == 'euler':
-        config.set_mode_euler()
+        from alad_mod import config_server as config
 
     print('---------- LOADING DATA ----------')
     x = np.load(config.train_data_file, allow_pickle=True)

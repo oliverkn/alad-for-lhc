@@ -1,10 +1,10 @@
 import tensorflow as tf
 
 # --------------------------------DATA--------------------------------
-train_data_file = '/home/oliverkn/pro/data/4_4/train_sm_only.npy'
-valid_data_file = '/home/oliverkn/pro/data/4_4/valid_supervised.npy'
 
-result_path = '/home/oliverkn/pro/results/4_4/alad/'
+train_data_file = '/cluster/scratch/knappo/data/4_4/train_sm_only.npy'
+valid_data_file = '/cluster/scratch/knappo/data/4_4/valid_supervised.npy'
+result_path = '/cluster/home/knappo/results/4_4/alad/'
 
 # --------------------------------HYPERPARAMETERS--------------------------------
 input_dim = 23
@@ -19,7 +19,8 @@ allow_zz = True
 fm_degree = 1
 
 max_valid_samples = 50_000
-max_train_samples = 500_000  # inf
+max_train_samples = 500_000
+
 
 # --------------------------------TRAIN_SETTINGS--------------------------------
 load_model = False
@@ -28,8 +29,8 @@ model_file = ''
 max_epoch = 1000
 
 sm_write_freq = 100  # number of batches
-eval_freq = 1_000
-checkpoint_freq = 2_000
+eval_freq = 2_000
+checkpoint_freq = 10_000
 
 enable_sm = True
 enable_eval = True
