@@ -51,7 +51,8 @@ if __name__ == '__main__':
         os.makedirs(result_dir)
 
     # copy python files
-    shutil.copytree('.', os.path.join(result_dir, 'python'))
+    code_dir = os.path.dirname(os.path.abspath(__file__))
+    shutil.copytree(code_dir, os.path.join(result_dir, 'python'))
 
     print('---------- STARTING TRAINING ----------')
     with tf.Session() as sess:
