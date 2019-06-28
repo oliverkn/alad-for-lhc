@@ -8,9 +8,9 @@ result_path = '/home/oliverkn/pro/results/4_4/alad/'
 
 # --------------------------------HYPERPARAMETERS--------------------------------
 input_dim = 23
-latent_dim = 4
+latent_dim = 12
 
-learning_rate = 1e-5
+learning_rate = 1e-3
 batch_size = 100
 init_kernel = tf.contrib.layers.xavier_initializer()
 ema_decay = 0.999
@@ -69,12 +69,20 @@ def encoder(x_inp, is_training=False, getter=None, reuse=False,
         name_net = 'layer_1'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(x_inp,
-                                  units=64,
+                                  units=50,
                                   kernel_initializer=init_kernel,
                                   name='fc')
             net = leakyReLu(net)
 
         name_net = 'layer_2'
+        with tf.variable_scope(name_net):
+            net = tf.layers.dense(net,
+                                  units=50,
+                                  kernel_initializer=init_kernel,
+                                  name='fc')
+            net = leakyReLu(net)
+
+        name_net = 'layer_3'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(net,
                                   units=latent_dim,
@@ -102,7 +110,7 @@ def decoder(z_inp, is_training=False, getter=None, reuse=False):
         name_net = 'layer_1'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(z_inp,
-                                  units=64,
+                                  units=50,
                                   kernel_initializer=init_kernel,
                                   name='fc')
             net = tf.nn.relu(net)
@@ -110,7 +118,7 @@ def decoder(z_inp, is_training=False, getter=None, reuse=False):
         name_net = 'layer_2'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(net,
-                                  units=128,
+                                  units=50,
                                   kernel_initializer=init_kernel,
                                   name='fc')
             net = tf.nn.relu(net)

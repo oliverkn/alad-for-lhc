@@ -10,7 +10,7 @@ result_path = '/cluster/home/knappo/results/4_4/alad/'
 input_dim = 23
 latent_dim = 4
 
-learning_rate = 1e-5
+learning_rate = 1e-3
 batch_size = 100
 init_kernel = tf.contrib.layers.xavier_initializer()
 ema_decay = 0.999
@@ -26,11 +26,11 @@ max_train_samples = 500_000
 load_model = False
 model_file = ''
 
-max_epoch = 1000
+max_epoch = 10000
 
-sm_write_freq = 100  # number of batches
-eval_freq = 2_000
-checkpoint_freq = 10_000
+sm_write_freq = 1_000  # number of batches
+eval_freq = 5_000
+checkpoint_freq = 1_000_000
 
 enable_sm = True
 enable_eval = True
@@ -70,12 +70,20 @@ def encoder(x_inp, is_training=False, getter=None, reuse=False,
         name_net = 'layer_1'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(x_inp,
-                                  units=64,
+                                  units=50,
                                   kernel_initializer=init_kernel,
                                   name='fc')
             net = leakyReLu(net)
 
         name_net = 'layer_2'
+        with tf.variable_scope(name_net):
+            net = tf.layers.dense(net,
+                                  units=50,
+                                  kernel_initializer=init_kernel,
+                                  name='fc')
+            net = leakyReLu(net)
+
+        name_net = 'layer_3'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(net,
                                   units=latent_dim,
@@ -103,7 +111,7 @@ def decoder(z_inp, is_training=False, getter=None, reuse=False):
         name_net = 'layer_1'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(z_inp,
-                                  units=64,
+                                  units=50,
                                   kernel_initializer=init_kernel,
                                   name='fc')
             net = tf.nn.relu(net)
@@ -111,7 +119,7 @@ def decoder(z_inp, is_training=False, getter=None, reuse=False):
         name_net = 'layer_2'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(net,
-                                  units=128,
+                                  units=50,
                                   kernel_initializer=init_kernel,
                                   name='fc')
             net = tf.nn.relu(net)
