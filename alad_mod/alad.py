@@ -327,6 +327,11 @@ class ALAD(AbstractAnomalyDetector):
                     evaluator.evaluate(self, step, {})
                     evaluator.save_results(logdir)
 
+                    # add some metrics to summary
+                    sm = tf.Summary()
+                    sm.value.add(tag='AUROC', simple_value=evaluator.hist['auc'][-1])
+                    writer.add_summary(sm, step)
+
                 if self.config.enable_checkpoint_save and step % self.config.checkpoint_freq == 0:
                     print('saving checkpoint at step %s' % step)
                     saver.save(sess, logdir + '/model', global_step=step)

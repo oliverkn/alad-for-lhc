@@ -8,12 +8,13 @@ from core.skeleton import AbstractEvaluator
 
 
 class BasicEvaluator(AbstractEvaluator):
-    def __init__(self, x, y):
+    def __init__(self, x, y, enable_roc=True):
         # labels must be a 1-dim array
         assert len(y.shape) == 1
 
         self.x = x
         self.y = y
+        self.enable_roc = enable_roc
 
         self.hist = {}
         self.hist['epoch'] = []
@@ -53,14 +54,17 @@ class BasicEvaluator(AbstractEvaluator):
         precission = 0
         # f1_score = sklearn.metrics.f1_score(self.y, anomaly_prob, pos_label=1)
         f1_score = 0
-        roc = sklearn.metrics.roc_curve(self.y, anomaly_prob, pos_label=1)
+
         auc = sklearn.metrics.roc_auc_score(self.y, anomaly_prob)
 
         self.hist['accuracy'].append(accuracy)
         self.hist['precission'].append(precission)
         self.hist['f1_score'].append(f1_score)
         self.hist['auc'].append(auc)
-        self.hist['roc'].append(roc)
+
+        if self.enable_roc:
+            roc = sklearn.metrics.roc_curve(self.y, anomaly_prob, pos_label=1)
+            self.hist['roc'].append(roc)
 
     def save_results(self, path):
         np.save(join(path, 'metrics.npy'), self.hist, allow_pickle=True)

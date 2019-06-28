@@ -47,5 +47,5 @@ if __name__ == '__main__':
     print('---------- STARTING TRAINING ----------')
     with tf.Session() as sess:
         alad = ALAD(config, sess)
-        evaluator = BasicEvaluator(x_valid, y_valid)
+        evaluator = BasicEvaluator(x_valid, y_valid, enable_roc=config.enable_roc)
         alad.fit(x, evaluator=evaluator, max_epoch=config.max_epoch, logdir=result_dir)
