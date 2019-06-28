@@ -1,7 +1,7 @@
 import argparse
 from data.raw_loader import *
 
-parser = argparse.ArgumentParser(description='Training')
+parser = argparse.ArgumentParser(description='dataset builder')
 parser.add_argument('--mode', metavar='-m', type=str, help='mode=pc, euler', default='pc')
 args = parser.parse_args()
 

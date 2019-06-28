@@ -38,6 +38,22 @@ enable_checkpoint_save = True
 # evaluation
 enable_roc = False
 
+# --------------------------------SPECIAL_MODES_OVERRIDES--------------------------------
+def set_mode_euler():
+    train_data_file = '/cluster/scratch/knappo/data/4_4/train_sm_only.npy'
+    valid_data_file = '/cluster/scratch/knappo/data/4_4/valid_supervised.npy'
+    result_path = '/cluster/home/knappo/results/4_4/alad/'
+
+    sm_write_freq = 100  # number of batches
+    eval_freq = 2_000
+    checkpoint_freq = 10_000
+
+    enable_sm = True
+    enable_eval = True
+    enable_checkpoint_save = False
+
+    # evaluation
+    enable_roc = False
 
 # --------------------------------MODELS--------------------------------
 

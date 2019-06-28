@@ -1,5 +1,6 @@
 import os
 import shutil
+import argparse
 
 import tensorflow as tf
 
@@ -10,6 +11,14 @@ from data.raw_loader import *
 from evaluation.basic_evaluator import BasicEvaluator
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(description='ALAD training')
+    parser.add_argument('--mode', metavar='-m', type=str, help='mode=pc, euler', default='pc')
+    args = parser.parse_args()
+
+    if args.mode == 'euler':
+        config.set_mode_euler()
+
     print('---------- LOADING DATA ----------')
     x = np.load(config.train_data_file, allow_pickle=True)
     data_valid = np.load(config.valid_data_file, allow_pickle=True).item()
