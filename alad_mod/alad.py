@@ -254,6 +254,15 @@ class ALAD(AbstractAnomalyDetector):
 
         self.__dict__.update(locals())
 
+    def E(self, x):
+        pass
+
+    def G(self, x):
+        pass
+
+    def recon(self, x):
+        return self.sess.run(self.rec_x, feed_dict={self.x_pl: x})
+
     def compute_fm_scores(self, x):
         feed_dict = {self.x_pl: x,
                      self.z_pl: np.random.normal(size=[x.shape[0], self.config.latent_dim]),
