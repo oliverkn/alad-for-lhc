@@ -1,16 +1,16 @@
 import tensorflow as tf
 
 # --------------------------------DATA--------------------------------
-train_data_file = '/home/oliverkn/pro/data/4_4/train_sm_only.npy'
-valid_data_file = '/home/oliverkn/pro/data/4_4/valid_supervised.npy'
-
+data_path = '/home/oliverkn/pro/data/hlf_set/'
 result_path = '/home/oliverkn/pro/results/4_4/alad/'
+
+exclude_features = []
 
 # --------------------------------HYPERPARAMETERS--------------------------------
 input_dim = 23
-latent_dim = 12
+latent_dim = 6
 
-learning_rate = 1e-3
+learning_rate = 1e-5
 batch_size = 100
 init_kernel = tf.contrib.layers.xavier_initializer()
 ema_decay = 0.999
@@ -18,8 +18,8 @@ do_spectral_norm = True
 allow_zz = True
 fm_degree = 1
 
-max_valid_samples = 50_000
-max_train_samples = 500_000  # inf
+max_valid_samples = 100_000
+max_train_samples = 500_000_000  # inf
 
 # --------------------------------TRAIN_SETTINGS--------------------------------
 load_model = False
@@ -29,7 +29,7 @@ max_epoch = 1000
 
 sm_write_freq = 100  # number of batches
 eval_freq = 1_000
-checkpoint_freq = 2_000
+checkpoint_freq = 10_000
 
 enable_sm = True
 enable_eval = True
@@ -69,7 +69,7 @@ def encoder(x_inp, is_training=False, getter=None, reuse=False,
         name_net = 'layer_1'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(x_inp,
-                                  units=50,
+                                  units=100,
                                   kernel_initializer=init_kernel,
                                   name='fc')
             net = leakyReLu(net)
@@ -77,12 +77,20 @@ def encoder(x_inp, is_training=False, getter=None, reuse=False,
         name_net = 'layer_2'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(net,
-                                  units=50,
+                                  units=100,
                                   kernel_initializer=init_kernel,
                                   name='fc')
             net = leakyReLu(net)
 
         name_net = 'layer_3'
+        with tf.variable_scope(name_net):
+            net = tf.layers.dense(net,
+                                  units=100,
+                                  kernel_initializer=init_kernel,
+                                  name='fc')
+            net = leakyReLu(net)
+
+        name_net = 'layer_4'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(net,
                                   units=latent_dim,
@@ -110,7 +118,7 @@ def decoder(z_inp, is_training=False, getter=None, reuse=False):
         name_net = 'layer_1'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(z_inp,
-                                  units=50,
+                                  units=100,
                                   kernel_initializer=init_kernel,
                                   name='fc')
             net = tf.nn.relu(net)
@@ -118,12 +126,20 @@ def decoder(z_inp, is_training=False, getter=None, reuse=False):
         name_net = 'layer_2'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(net,
-                                  units=50,
+                                  units=100,
                                   kernel_initializer=init_kernel,
                                   name='fc')
             net = tf.nn.relu(net)
 
         name_net = 'layer_3'
+        with tf.variable_scope(name_net):
+            net = tf.layers.dense(net,
+                                  units=100,
+                                  kernel_initializer=init_kernel,
+                                  name='fc')
+            net = tf.nn.relu(net)
+
+        name_net = 'layer_4'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(net,
                                   units=input_dim,

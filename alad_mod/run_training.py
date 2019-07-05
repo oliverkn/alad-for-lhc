@@ -8,7 +8,8 @@ import tensorflow as tf
 from alad_mod import config
 from alad_mod.alad import ALAD
 
-from data.raw_loader import *
+from data.hlf_dataset_utils import *
+from data.hlf_preprocessing import HLFDataPreprocessor
 from evaluation.basic_evaluator import BasicEvaluator
 
 if __name__ == '__main__':
@@ -27,9 +28,8 @@ if __name__ == '__main__':
         spec.loader.exec_module(config)
 
     print('---------- LOADING DATA ----------')
-    x = np.load(config.train_data_file, allow_pickle=True)
-    data_valid = np.load(config.valid_data_file, allow_pickle=True).item()
-    x_valid, y_valid = data_valid['x'], data_valid['y']
+    x, _ = load_data(config.data_path, set='train', type='sm', shuffle=True)
+    x_valid, y_valid = load_data(config.data_path, set='valid', type='mix', shuffle=True)
 
     print('training data shapes:' + str(x.shape))
     print('evaluation data shapes:' + str(x_valid.shape))
@@ -66,8 +66,26 @@ if __name__ == '__main__':
     # copy config file to result directory
     shutil.copy(args.config, os.path.join(result_dir, 'config.py'))
 
+    print('---------- PREPROCESS DATA ----------')
+    preprocessor = HLFDataPreprocessor()
+
+    print('fitting scaler')
+    preprocessor.fit(x)
+    mask = build_mask(config.exclude_features)
+    preprocessor.set_mask(mask)
+
+    print('transforming data')
+    x = preprocessor.transform(x)
+    x_valid = preprocessor.transform(x_valid)
+
+    print('saving preprocessor')
+    preprocessor.save(os.path.join(result_dir, 'preprocessor.pkl'))
+
     print('---------- STARTING TRAINING ----------')
     with tf.Session() as sess:
         alad = ALAD(config, sess)
-        evaluator = BasicEvaluator(x_valid, y_valid, enable_roc=config.enable_roc)
+        evaluator = BasicEvaluator()
+        evaluator.add_auroc_module(x_valid, y_valid)
+        evaluator.add_recon_module(x_valid[y_valid == 0], x_valid[y_valid == 1], x[:config.max_valid_samples])
+
         alad.fit(x, evaluator=evaluator, max_epoch=config.max_epoch, logdir=result_dir)

@@ -76,3 +76,19 @@ def load_data(path, set='train', type='sm', shuffle=True, sm_list=[], bsm_list=[
         data, labels = sklearn.utils.shuffle(data, labels)
 
     return data, labels
+
+
+feature_names = ['HT', 'METp', 'METo', 'MT', 'nJets',
+                 'bJets', 'allJetMass', 'LepPt', 'LepEta',
+                 'LepIsoCh', 'LepIsoGamma', 'LepIsoNeu', 'LepCharge',
+                 'LepIsEle', 'nMu', 'allMuMass', 'allMuPt', 'nEle',
+                 'allEleMass', 'allElePt', 'nChHad', 'nNeuHad', 'nPhoton']
+
+
+def build_mask(exclude_features):
+    mask = np.ones(len(feature_names), dtype=bool)
+    for i, name in enumerate(feature_names):
+        if name in exclude_features:
+            mask[i] = False
+
+    return mask
