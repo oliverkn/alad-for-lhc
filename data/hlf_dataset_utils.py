@@ -27,7 +27,7 @@ def create_dataset(input_file, target_path, name, train_split=0.5, valid_split=0
     np.save(os.path.join(target_path, name + '_test.npy'), data_test)
 
 
-def load_data(path, set='train', type='sm', shuffle=True, sm_list=[], bsm_list=[]):
+def load_data(path, set='train', type='sm', shuffle=True, sm_list=[], bsm_list=[], balance_sm=True):
     if type == 'sm':
         sm_list = ['Wlnu', 'Zll', 'ttbar', 'qcd']
         bsm_list = []
@@ -49,6 +49,13 @@ def load_data(path, set='train', type='sm', shuffle=True, sm_list=[], bsm_list=[
     for name in bsm_list:
         file = os.path.join(path, name + '_' + set + '.npy')
         list_data_bsm.append(np.load(file))
+
+    # balance sm data
+    if set == 'train' and balance_sm:
+        min_len = np.amin([data_sm.shape[0] for data_sm in list_data_sm])
+
+        for i in range(len(list_data_sm)):
+            list_data_sm[i] = sklearn.utils.shuffle(list_data_sm[i])[0:min_len]
 
     # generate labels and mix files
 

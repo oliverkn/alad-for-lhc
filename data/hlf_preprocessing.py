@@ -1,6 +1,7 @@
-import numpy as np
 import pickle
 from sklearn.preprocessing import StandardScaler
+
+from data.hlf_dataset_utils import feature_names
 
 
 class HLFDataPreprocessor:
@@ -26,6 +27,15 @@ class HLFDataPreprocessor:
     def save(self, file_path):
         with open(file_path, 'wb') as file:
             pickle.dump(self, file)
+
+    def get_feature_names(self):
+        masked_names = []
+
+        for i, name in enumerate(feature_names):
+            if self.mask[i]:
+                masked_names.append(name)
+
+        return masked_names
 
 
 def load(file_path):

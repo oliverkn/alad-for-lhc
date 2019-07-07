@@ -28,7 +28,7 @@ if __name__ == '__main__':
         spec.loader.exec_module(config)
 
     print('---------- LOADING DATA ----------')
-    x, _ = load_data(config.data_path, set='train', type='sm', shuffle=True)
+    x, _ = load_data(config.data_path, set='train', type='sm', shuffle=True, balance_sm=config.balance)
     x_valid, y_valid = load_data(config.data_path, set='valid', type='mix', shuffle=True)
 
     print('training data shapes:' + str(x.shape))
