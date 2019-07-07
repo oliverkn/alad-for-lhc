@@ -23,27 +23,31 @@ class BasicEvaluator(AbstractEvaluator):
 
         self.metric_module_list.append((names, metrics))
         for name in names:
-            self.hist[name] = []
+            self.hist[name] = np.array([], dtype=float)
 
-    def add_auroc_module(self, x, y):
+    def add_auroc_module(self, x, y, score_type='fm'):
         def auroc_metric(ad, epoch, logs):
-            anomaly_prob = ad.get_anomaly_scores(x, type='l1')
+            anomaly_prob = ad.get_anomaly_scores(x, type=score_type)
             auroc = sklearn.metrics.roc_auc_score(y, anomaly_prob)
             return [auroc]
 
-        self.add_metric_module(['auroc'], auroc_metric)
+        self.add_metric_module(['auroc_' + score_type], auroc_metric)
 
-    def add_recon_module(self, x_sm, x_bsm, x_train):
+    def add_anomaly_score_module(self, x_sm, x_bsm, score_type='fm'):
         def recon_metrics(ad, epoch, logs):
-            recon_loss_sm = np.linalg.norm(x_sm - ad.recon(x_sm), ord=1, axis=1).mean()
-            recon_loss_bsm = np.linalg.norm(x_bsm - ad.recon(x_bsm), ord=1, axis=1).mean()
-            recon_loss_train = np.linalg.norm(x_train - ad.recon(x_train), ord=1, axis=1).mean()
-            recon_loss_diff = recon_loss_bsm - recon_loss_sm
+            scores_sm = ad.get_anomaly_scores(x_sm, type=score_type)
+            scores_bsm = ad.get_anomaly_scores(x_bsm, type=score_type)
 
-            return recon_loss_sm, recon_loss_bsm, recon_loss_train, recon_loss_diff
+            sm_mean = np.mean(scores_sm)
+            sm_std = np.std(scores_sm)
+            bsm_mean = np.mean(scores_bsm)
+            bsm_std = np.std(scores_bsm)
 
-        self.add_metric_module(['recon_loss_sm', 'recon_loss_bsm', 'recon_loss_train', 'recon_loss_diff'],
-                               recon_metrics)
+            return sm_mean, sm_std, bsm_mean, bsm_std
+
+        names = ['sm_mean', 'sm_std', 'bsm_mean', 'bsm_std']
+        names = [name + '_' + score_type for name in names]
+        self.add_metric_module(names, recon_metrics)
 
     def get_metrics(self, eval_result):
         pass
@@ -53,7 +57,7 @@ class BasicEvaluator(AbstractEvaluator):
         for names, metrics in self.metric_module_list:
             metrics_res = metrics(anomaly_detector, epoch, logs)
             for i, name in enumerate(names):
-                self.hist[name].append(metrics_res[i])
+                self.hist[name] = np.append(self.hist[name], metrics_res[i])
 
     def save_results(self, path):
         np.save(join(path, 'metrics.npy'), self.hist, allow_pickle=True)

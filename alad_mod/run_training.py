@@ -48,7 +48,7 @@ if __name__ == '__main__':
     print('---------- CREATING RESULT DIRECTORY ----------')
 
     # create result directory
-    if args.resultdir == None:
+    if args.resultdir is None:
         max_dir_num = 0
         for subdir in os.listdir(config.result_path):
             if subdir.isdigit():
@@ -81,11 +81,18 @@ if __name__ == '__main__':
     print('saving preprocessor')
     preprocessor.save(os.path.join(result_dir, 'preprocessor.pkl'))
 
+    print('---------- INIT EVALUATOR ----------')
+    score_types = ['fm', 'l1', 'l2', 'ch']
+
+    x_valid_sm = x_valid[y_valid == 0]
+    x_valid_bsm = x_valid[y_valid == 1]
+
+    evaluator = BasicEvaluator()
+    for type in score_types:
+        evaluator.add_auroc_module(x_valid, y_valid, type)
+        evaluator.add_anomaly_score_module(x_valid_sm, x_valid_bsm, type)
+
     print('---------- STARTING TRAINING ----------')
     with tf.Session() as sess:
         alad = ALAD(config, sess)
-        evaluator = BasicEvaluator()
-        evaluator.add_auroc_module(x_valid, y_valid)
-        evaluator.add_recon_module(x_valid[y_valid == 0], x_valid[y_valid == 1], x[:config.max_valid_samples])
-
         alad.fit(x, evaluator=evaluator, max_epoch=config.max_epoch, logdir=result_dir)

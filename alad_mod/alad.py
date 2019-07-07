@@ -281,8 +281,17 @@ class ALAD(AbstractAnomalyDetector):
             return self.sess.run(self.score_l1, feed_dict=feed_dict)
         elif type == 'l2':
             return self.sess.run(self.score_l2, feed_dict=feed_dict)
+        elif type == 'ch':
+            return self.sess.run(self.score_ch, feed_dict=feed_dict)
         else:
             raise Exception()
+
+    def compute_all_scores(self, x):
+        feed_dict = {self.x_pl: x,
+                     self.z_pl: np.random.normal(size=[x.shape[0], self.config.latent_dim]),
+                     self.is_training_pl: False}
+        scores = [self.score_fm, self.score_l1, self.score_l2, self.score_ch]
+        return self.sess.run(scores, feed_dict=feed_dict)
 
     def fit(self, x, max_epoch, logdir, evaluator, model_file=None):
         sess = self.sess
@@ -348,12 +357,9 @@ class ALAD(AbstractAnomalyDetector):
                     evaluator.save_results(logdir)
 
                     # add some metrics to summary
-                    sm = tf.Summary()
-                    sm.value.add(tag='AUROC', simple_value=evaluator.hist['auroc'][-1])
-                    sm.value.add(tag='recon_loss_sm', simple_value=evaluator.hist['recon_loss_sm'][-1])
-                    sm.value.add(tag='recon_loss_bsm', simple_value=evaluator.hist['recon_loss_bsm'][-1])
-                    sm.value.add(tag='recon_loss_train', simple_value=evaluator.hist['recon_loss_train'][-1])
-                    writer.add_summary(sm, step)
+                    # sm = tf.Summary()
+                    # sm.value.add(tag='AUROC', simple_value=evaluator.hist['auroc'][-1])
+                    # writer.add_summary(sm, step)
 
                 if self.config.enable_checkpoint_save and step % self.config.checkpoint_freq == 0:
                     print('saving checkpoint at step %s' % step)
