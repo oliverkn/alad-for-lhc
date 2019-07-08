@@ -15,7 +15,6 @@ from evaluation.basic_evaluator import BasicEvaluator
 if __name__ == '__main__':
     print('---------- LOADING DATA ----------')
     x, y = kdd_dataset.get_train()
-    x_copy = x.copy()
     x_valid, y_valid = kdd_dataset.get_test()
 
     print('training data shapes:' + str(x.shape))
@@ -48,8 +47,18 @@ if __name__ == '__main__':
     code_dir = os.path.dirname(os.path.abspath(__file__))
     shutil.copytree(code_dir, os.path.join(result_dir, 'python'))
 
+    print('---------- INIT EVALUATOR ----------')
+    score_types = ['fm', 'l1', 'l2', 'ch']
+
+    x_valid_sm = x_valid[y_valid == 0]
+    x_valid_bsm = x_valid[y_valid == 1]
+
+    evaluator = BasicEvaluator()
+    for type in score_types:
+        evaluator.add_auroc_module(x_valid, y_valid, type)
+        evaluator.add_anomaly_score_module(x_valid_sm, x_valid_bsm, type)
+
     print('---------- STARTING TRAINING ----------')
     with tf.Session() as sess:
         alad = ALAD(config, sess)
-        evaluator = BasicEvaluator(x_valid, y_valid, enable_roc=config.enable_roc)
         alad.fit(x, evaluator=evaluator, max_epoch=config.max_epoch, logdir=result_dir)

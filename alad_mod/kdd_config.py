@@ -8,7 +8,7 @@ result_path = '/home/oliverkn/pro/results/kdd'
 
 # --------------------------------HYPERPARAMETERS--------------------------------
 input_dim = 121
-latent_dim = 20
+latent_dim = 32
 
 learning_rate = 1e-5
 batch_size = 50
