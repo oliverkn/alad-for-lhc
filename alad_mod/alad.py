@@ -351,7 +351,7 @@ class ALAD(AbstractAnomalyDetector):
                     sm = sess.run(self.sum_op, feed_dict=feed_dict)
                     writer.add_summary(sm, step)
 
-                if self.config.enable_sm and step % self.config.eval_freq == 0:
+                if self.config.enable_eval and step % self.config.eval_freq == 0:
                     print('evaluating at step %s' % step)
                     evaluator.evaluate(self, step, {})
                     evaluator.save_results(logdir)
