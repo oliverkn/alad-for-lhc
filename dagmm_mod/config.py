@@ -11,9 +11,9 @@ max_valid_samples = 100_000
 max_train_samples = 500_000_000  # inf
 
 # --------------------------------HYPERPARAMETERS--------------------------------
-comp_hiddens = [60, 30, 10, 1]
+comp_hiddens = [120, 60, 30, 4]
 comp_activation = tf.nn.tanh
-est_hiddens= [10, 4]
+est_hiddens= [20, 8]
 est_activation = tf.nn.tanh
 est_dropout_ratio = 0.5
 

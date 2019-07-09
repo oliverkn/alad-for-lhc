@@ -8,7 +8,7 @@ import tensorflow as tf
 from alad_mod import config
 from alad_mod.alad import ALAD
 
-from data.hlf_dataset_utils import *
+from data.hlf_dataset_utils import load_data, load_data_train, build_mask
 from data.hlf_preprocessing import HLFDataPreprocessor
 from evaluation.basic_evaluator import BasicEvaluator
 
@@ -28,7 +28,7 @@ if __name__ == '__main__':
         spec.loader.exec_module(config)
 
     print('---------- LOADING DATA ----------')
-    x, _ = load_data(config.data_path, set='train', type='sm', shuffle=True, balance_sm=config.balance)
+    x = load_data_train(config.data_path, config.sm_list, config.weights)
     x_valid, y_valid = load_data(config.data_path, set='valid', type='mix', shuffle=True)
 
     print('training data shapes:' + str(x.shape))

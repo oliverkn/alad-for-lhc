@@ -27,6 +27,38 @@ def create_dataset(input_file, target_path, name, train_split=0.5, valid_split=0
     np.save(os.path.join(target_path, name + '_test.npy'), data_test)
 
 
+def load_data_train(path, sm_list=None, weights=None):
+    if sm_list is None:
+        sm_list = ['Wlnu', 'Zll', 'ttbar', 'qcd']
+
+    if weights is None:
+        weights = np.ones(len(sm_list))
+
+    data = []
+    for name in sm_list:
+        file = os.path.join(path, name + '_train.npy')
+        data.append(np.load(file))
+
+    # apply weights
+    for i in range(len(data)):
+        weight = weights[i]
+        weight_int = int(weight)
+        weight_frac = weight - weight_int
+
+        # pre shuffle (just in case)
+        data[i] = sklearn.utils.shuffle(data[i])
+
+        # take fraction before repeating (important)
+        data_frac = data[i][: int(weight_frac * data[i].shape[0])]
+        data[i] = np.repeat(data[i], weight_int, axis=0)
+        data[i] = np.append(data[i], data_frac, axis=0)
+
+    data = np.concatenate(data)
+    data = sklearn.utils.shuffle(data)
+
+    return data
+
+
 def load_data(path, set='train', type='sm', shuffle=True, sm_list=[], bsm_list=[], balance_sm=True):
     if type == 'sm':
         sm_list = ['Wlnu', 'Zll', 'ttbar', 'qcd']
