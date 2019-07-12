@@ -19,13 +19,18 @@ if __name__ == '__main__':
     parser.add_argument('--resultdir', metavar='-d', type=str, help='directory for the results', default=None)
     args = parser.parse_args()
 
-    if args.config == None:
+    if args.config is None:
         print('No config file was given. Exit')
         exit()
     else:
         spec = importlib.util.spec_from_file_location("config", args.config)
         config = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(config)
+
+    if args.resultdir is None:
+        result_dir = os.path.join(config.result_path, input('resultdir name: '))
+    else:
+        result_dir = os.path.join(config.result_path, args.resultdir)
 
     print('---------- LOADING DATA ----------')
     x = load_data_train(config.data_path, config.sm_list, config.weights)
@@ -48,15 +53,6 @@ if __name__ == '__main__':
     print('---------- CREATING RESULT DIRECTORY ----------')
 
     # create result directory
-    if args.resultdir is None:
-        max_dir_num = 0
-        for subdir in os.listdir(config.result_path):
-            if subdir.isdigit():
-                max_dir_num = max([max_dir_num, int(subdir)])
-        result_dir = os.path.join(config.result_path, str(max_dir_num + 1))
-    else:
-        result_dir = os.path.join(config.result_path, args.resultdir)
-
     if os.path.exists(result_dir):
         print('Result directory already exists. Exit')
         exit()

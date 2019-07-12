@@ -22,10 +22,10 @@ batch_size = 50
 init_kernel = tf.contrib.layers.xavier_initializer()
 ema_decay = 0.999
 do_spectral_norm = True
-allow_zz = True
+allow_zz = False
 fm_degree = 1
 
-max_valid_samples = 100_000
+max_valid_samples = 500_000
 max_train_samples = 500_000_000  # inf
 
 # --------------------------------TRAIN_SETTINGS--------------------------------
@@ -35,7 +35,7 @@ model_file = ''
 max_epoch = 1000
 
 sm_write_freq = 1_000  # number of batches
-eval_freq = 2_000
+eval_freq = 10_000
 checkpoint_freq = 10_000
 
 enable_sm = True
@@ -80,6 +80,7 @@ def encoder(x_inp, is_training=False, getter=None, reuse=False,
                                   kernel_initializer=init_kernel,
                                   name='fc')
             net = leakyReLu(net)
+            # net = tf.nn.tanh(net)
 
         name_net = 'layer_2'
         with tf.variable_scope(name_net):
@@ -88,6 +89,7 @@ def encoder(x_inp, is_training=False, getter=None, reuse=False,
                                   kernel_initializer=init_kernel,
                                   name='fc')
             net = leakyReLu(net)
+            # net = tf.nn.tanh(net)
 
         name_net = 'layer_3'
         with tf.variable_scope(name_net):
@@ -96,6 +98,7 @@ def encoder(x_inp, is_training=False, getter=None, reuse=False,
                                   kernel_initializer=init_kernel,
                                   name='fc')
             net = leakyReLu(net)
+            # net = tf.nn.tanh(net)
 
         name_net = 'layer_4'
         with tf.variable_scope(name_net):
@@ -103,6 +106,8 @@ def encoder(x_inp, is_training=False, getter=None, reuse=False,
                                   units=latent_dim,
                                   kernel_initializer=init_kernel,
                                   name='fc')
+
+
     return net
 
 

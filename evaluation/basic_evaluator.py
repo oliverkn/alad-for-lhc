@@ -25,13 +25,22 @@ class BasicEvaluator(AbstractEvaluator):
         for name in names:
             self.hist[name] = np.array([], dtype=float)
 
-    def add_auroc_module(self, x, y, score_type='fm'):
+    def add_auroc_module(self, x, y, score_type='fm', target_fpr=1e-4):
         def auroc_metric(ad, epoch, logs):
             anomaly_prob = ad.get_anomaly_scores(x, type=score_type)
             auroc = sklearn.metrics.roc_auc_score(y, anomaly_prob)
-            return [auroc]
+            fpr, tpr, _ = sklearn.metrics.roc_curve(y, anomaly_prob, pos_label=1)
+            idx = np.argmax(fpr > target_fpr)
+            lr_pos_ = tpr[idx] / fpr[idx]
+            return [auroc, lr_pos_]
 
-        self.add_metric_module(['auroc_' + score_type], auroc_metric)
+        self.add_metric_module(['auroc_' + score_type, 'lr_pos_' + score_type], auroc_metric)
+
+    def compute_rates(self, threshold, scores):
+        return 0, 0
+
+    def compute_threshold(self):
+        pass
 
     def add_anomaly_score_module(self, x_sm, x_bsm, score_type='fm'):
         def recon_metrics(ad, epoch, logs):
