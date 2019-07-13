@@ -254,12 +254,6 @@ class ALAD(AbstractAnomalyDetector):
 
         self.__dict__.update(locals())
 
-    def E(self, x):
-        pass
-
-    def G(self, x):
-        pass
-
     def recon(self, x):
         return self.sess.run(self.rec_x, feed_dict={self.x_pl: x})
 

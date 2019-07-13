@@ -9,23 +9,23 @@ exclude_features = ['nPhoton', 'LepEta']
 balance = True
 
 sm_list = ['Wlnu', 'Zll', 'ttbar', 'qcd']
-# sm_list = ['ttbar']
 
+# weights = np.array([1, 8, 15, 8]) / 10.
 weights = np.array([1, 1, 1, 1])
 
 # --------------------------------HYPERPARAMETERS--------------------------------
 input_dim = 21
-latent_dim = 12
+latent_dim = 4
 
 learning_rate = 1e-5
 batch_size = 50
 init_kernel = tf.contrib.layers.xavier_initializer()
 ema_decay = 0.999
 do_spectral_norm = True
-allow_zz = True
+allow_zz = False
 fm_degree = 1
 
-max_valid_samples = 500_000
+max_valid_samples = 100_000
 max_train_samples = 500_000_000  # inf
 
 # --------------------------------TRAIN_SETTINGS--------------------------------
@@ -35,7 +35,7 @@ model_file = ''
 max_epoch = 1000
 
 sm_write_freq = 1_000  # number of batches
-eval_freq = 10_000
+eval_freq = 2_000
 checkpoint_freq = 10_000
 
 enable_sm = True
@@ -54,6 +54,11 @@ def leakyReLu(x, alpha=0.2, name=None):
             return tf.nn.relu(x) - (alpha * tf.nn.relu(-x))
     else:
         return tf.nn.relu(x) - (alpha * tf.nn.relu(-x))
+
+
+def pISRLu(x, min_value=5e-3):
+    # return 5e-3 + tf.nn.relu(x)
+    return 1. + min_value + tf.where(tf.greater(x, 0), x, tf.divide(x, tf.sqrt(1 + tf.square(x))))
 
 
 def encoder(x_inp, is_training=False, getter=None, reuse=False,
@@ -80,7 +85,6 @@ def encoder(x_inp, is_training=False, getter=None, reuse=False,
                                   kernel_initializer=init_kernel,
                                   name='fc')
             net = leakyReLu(net)
-            # net = tf.nn.tanh(net)
 
         name_net = 'layer_2'
         with tf.variable_scope(name_net):
@@ -89,7 +93,6 @@ def encoder(x_inp, is_training=False, getter=None, reuse=False,
                                   kernel_initializer=init_kernel,
                                   name='fc')
             net = leakyReLu(net)
-            # net = tf.nn.tanh(net)
 
         name_net = 'layer_3'
         with tf.variable_scope(name_net):
@@ -98,15 +101,26 @@ def encoder(x_inp, is_training=False, getter=None, reuse=False,
                                   kernel_initializer=init_kernel,
                                   name='fc')
             net = leakyReLu(net)
-            # net = tf.nn.tanh(net)
 
-        name_net = 'layer_4'
+        name_net = 'layer_mean'
         with tf.variable_scope(name_net):
-            net = tf.layers.dense(net,
+            loc = tf.layers.dense(net,
+                                  units=latent_dim,
+                                  kernel_initializer=init_kernel,
+                                  name='fc')
+            loc = tf.nn.tanh(net)
+
+        name_net = 'layer_var'
+        with tf.variable_scope(name_net):
+            var = tf.layers.dense(net,
                                   units=latent_dim,
                                   kernel_initializer=init_kernel,
                                   name='fc')
 
+            var = pISRLu(var, min_value=5e-3)  # strictly positive function needed
+
+        dist = tf.distributions.Normal(loc=loc, scale=tf.sqrt(var))
+        net = dist.sample()
 
     return net
 
@@ -151,14 +165,33 @@ def decoder(z_inp, is_training=False, getter=None, reuse=False):
                                   name='fc')
             net = tf.nn.relu(net)
 
-        name_net = 'layer_4'
-        with tf.variable_scope(name_net):
-            net = tf.layers.dense(net,
-                                  units=input_dim,
-                                  kernel_initializer=init_kernel,
-                                  name='fc')
+    output_list = []
 
-    return net
+    for i, name, type in list:
+        pass
+
+    return tf.concat(output_list, axis=1)
+
+
+def add_gaussian(net, name):
+    with tf.variable_scope('layer_' + name):
+        params = tf.layers.dense(net,
+                                 units=2,
+                                 kernel_initializer=init_kernel,
+                                 name='fc')
+
+        dist = tf.distributions.Normal(loc=params[0], scale=params[1])
+        return dist.sample()
+
+def add_gaussian(net, name):
+    with tf.variable_scope('layer_' + name):
+        params = tf.layers.dense(net,
+                                 units=2,
+                                 kernel_initializer=init_kernel,
+                                 name='fc')
+
+        dist = tf.distributions.Normal(loc=params[0], scale=params[1])
+        return dist.sample()
 
 
 def discriminator_xz(x_inp, z_inp, is_training=False, getter=None, reuse=False,

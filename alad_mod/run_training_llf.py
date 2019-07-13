@@ -6,8 +6,8 @@ import importlib.util
 import tensorflow as tf
 
 from alad_mod.alad import ALAD
-from data.hlf_dataset_utils import load_data, load_data_train, build_mask
-from data.hlf_preprocessing import HLFDataPreprocessor
+from data.llf_dataset_utils import load_data
+from data.llf_preprocessing import LLFDataPreprocessor
 from evaluation.basic_evaluator import BasicEvaluator
 
 if __name__ == '__main__':
@@ -37,7 +37,7 @@ if __name__ == '__main__':
         result_dir = os.path.join(config.result_path, args.resultdir)
 
     print('---------- LOADING DATA ----------')
-    x = load_data_train(config.data_path, config.sm_list, config.weights)
+    x, _ = load_data(config.data_path, set='train', type='custom', sm_list=config.sm_list, bsm_list=[], shuffle=True)
     x_valid, y_valid = load_data(config.data_path, set='valid', type='mix', shuffle=True)
 
     print('training data shapes:' + str(x.shape))
@@ -67,12 +67,7 @@ if __name__ == '__main__':
     shutil.copy(args.config, os.path.join(result_dir, 'config.py'))
 
     print('---------- PREPROCESS DATA ----------')
-    preprocessor = HLFDataPreprocessor()
-
-    print('fitting scaler')
-    preprocessor.fit(x)
-    mask = build_mask(config.exclude_features)
-    preprocessor.set_mask(mask)
+    preprocessor = LLFDataPreprocessor()
 
     print('transforming data')
     x = preprocessor.transform(x)

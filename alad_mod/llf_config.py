@@ -2,20 +2,14 @@ import tensorflow as tf
 import numpy as np
 
 # --------------------------------DATA--------------------------------
-data_path = '/home/oliverkn/pro/data/hlf_set/'
-result_path = '/home/oliverkn/pro/results/4_4/alad/'
-
-exclude_features = ['nPhoton', 'LepEta']
-balance = True
+data_path = '/home/oliverkn/pro/data/llf_set/'
+result_path = '/home/oliverkn/pro/results/llf_set/alad/'
 
 sm_list = ['Wlnu', 'Zll', 'ttbar', 'qcd']
-# sm_list = ['ttbar']
-
-weights = np.array([1, 1, 1, 1])
 
 # --------------------------------HYPERPARAMETERS--------------------------------
-input_dim = 21
-latent_dim = 12
+input_dim = 250
+latent_dim = 64
 
 learning_rate = 1e-5
 batch_size = 50
@@ -75,38 +69,17 @@ def encoder(x_inp, is_training=False, getter=None, reuse=False,
     with tf.variable_scope('encoder', reuse=reuse, custom_getter=getter):
         name_net = 'layer_1'
         with tf.variable_scope(name_net):
-            net = tf.layers.dense(x_inp,
-                                  units=256,
-                                  kernel_initializer=init_kernel,
-                                  name='fc')
+            net = tf.layers.dense(x_inp, units=256, kernel_initializer=init_kernel, name='fc')
             net = leakyReLu(net)
-            # net = tf.nn.tanh(net)
 
         name_net = 'layer_2'
         with tf.variable_scope(name_net):
-            net = tf.layers.dense(net,
-                                  units=128,
-                                  kernel_initializer=init_kernel,
-                                  name='fc')
+            net = tf.layers.dense(net, units=128, kernel_initializer=init_kernel, name='fc')
             net = leakyReLu(net)
-            # net = tf.nn.tanh(net)
 
         name_net = 'layer_3'
         with tf.variable_scope(name_net):
-            net = tf.layers.dense(net,
-                                  units=64,
-                                  kernel_initializer=init_kernel,
-                                  name='fc')
-            net = leakyReLu(net)
-            # net = tf.nn.tanh(net)
-
-        name_net = 'layer_4'
-        with tf.variable_scope(name_net):
-            net = tf.layers.dense(net,
-                                  units=latent_dim,
-                                  kernel_initializer=init_kernel,
-                                  name='fc')
-
+            net = tf.layers.dense(net, units=latent_dim, kernel_initializer=init_kernel, name='fc')
 
     return net
 
@@ -129,34 +102,17 @@ def decoder(z_inp, is_training=False, getter=None, reuse=False):
     with tf.variable_scope('generator', reuse=reuse, custom_getter=getter):
         name_net = 'layer_1'
         with tf.variable_scope(name_net):
-            net = tf.layers.dense(z_inp,
-                                  units=64,
-                                  kernel_initializer=init_kernel,
-                                  name='fc')
+            net = tf.layers.dense(z_inp, units=128, kernel_initializer=init_kernel, name='fc')
             net = tf.nn.relu(net)
 
         name_net = 'layer_2'
         with tf.variable_scope(name_net):
-            net = tf.layers.dense(net,
-                                  units=128,
-                                  kernel_initializer=init_kernel,
-                                  name='fc')
+            net = tf.layers.dense(net, units=256, kernel_initializer=init_kernel, name='fc')
             net = tf.nn.relu(net)
 
         name_net = 'layer_3'
         with tf.variable_scope(name_net):
-            net = tf.layers.dense(net,
-                                  units=256,
-                                  kernel_initializer=init_kernel,
-                                  name='fc')
-            net = tf.nn.relu(net)
-
-        name_net = 'layer_4'
-        with tf.variable_scope(name_net):
-            net = tf.layers.dense(net,
-                                  units=input_dim,
-                                  kernel_initializer=init_kernel,
-                                  name='fc')
+            net = tf.layers.dense(net, units=input_dim, kernel_initializer=init_kernel, name='fc')
 
     return net
 
@@ -164,20 +120,16 @@ def decoder(z_inp, is_training=False, getter=None, reuse=False):
 def discriminator_xz(x_inp, z_inp, is_training=False, getter=None, reuse=False,
                      do_spectral_norm=False):
     """ Discriminator architecture in tensorflow
-
     Discriminates between pairs (E(x), x) and (z, G(z))
-
     Args:
         x_inp (tensor): input data for the discriminator.
         z_inp (tensor): input variable in the latent space
         is_training (bool): for batch norms and dropouts
         getter: for exponential moving average during inference
         reuse (bool): sharing variables or not
-
     Returns:
         logits (tensor): last activation layer of the discriminator (shape 1)
         intermediate_layer (tensor): intermediate layer for feature matching
-
     """
     with tf.variable_scope('discriminator_xz', reuse=reuse, custom_getter=getter):
         # D(x)
@@ -205,7 +157,7 @@ def discriminator_xz(x_inp, z_inp, is_training=False, getter=None, reuse=False,
         name_y = 'y_layer_1'
         with tf.variable_scope(name_y):
             y = tf.layers.dense(y,
-                                128,
+                                256,
                                 kernel_initializer=init_kernel)
             y = leakyReLu(y)
             y = tf.layers.dropout(y, rate=0.5, name='dropout', training=is_training)
@@ -224,25 +176,30 @@ def discriminator_xz(x_inp, z_inp, is_training=False, getter=None, reuse=False,
 def discriminator_xx(x, rec_x, is_training=False, getter=None, reuse=False,
                      do_spectral_norm=False):
     """ Discriminator architecture in tensorflow
-
     Discriminates between (x,x) and (x,rec_x)
-
     Args:
         x (tensor): input from the data space
         rec_x (tensor): reconstructed data
         is_training (bool): for batch norms and dropouts
         getter: for exponential moving average during inference
         reuse (bool): sharing variables or not
-
     Returns:
         logits (tensor): last activation layer of the discriminator
         intermediate_layer (tensor): intermediate layer for feature matching
-
     """
     with tf.variable_scope('discriminator_xx', reuse=reuse, custom_getter=getter):
         net = tf.concat([x, rec_x], axis=1)
 
         name_net = 'layer_1'
+        with tf.variable_scope(name_net):
+            net = tf.layers.dense(net,
+                                  units=256,
+                                  kernel_initializer=init_kernel,
+                                  name='fc')
+            net = leakyReLu(net)
+            net = tf.layers.dropout(net, rate=0.2, name='dropout', training=is_training)
+
+        name_net = 'layer_2'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(net,
                                   units=128,
@@ -253,7 +210,7 @@ def discriminator_xx(x, rec_x, is_training=False, getter=None, reuse=False,
 
         intermediate_layer = net
 
-        name_net = 'layer_2'
+        name_net = 'layer_3'
         with tf.variable_scope(name_net):
             logits = tf.layers.dense(net,
                                      units=1,
@@ -266,37 +223,43 @@ def discriminator_xx(x, rec_x, is_training=False, getter=None, reuse=False,
 def discriminator_zz(z, rec_z, is_training=False, getter=None, reuse=False,
                      do_spectral_norm=False):
     """ Discriminator architecture in tensorflow
-
     Discriminates between (z,z) and (z,rec_z)
-
     Args:
         z (tensor): input from the latent space
         rec_z (tensor): reconstructed data
         is_training (bool): for batch norms and dropouts
         getter: for exponential moving average during inference
         reuse (bool): sharing variables or not
-
     Returns:
         logits (tensor): last activation layer of the discriminator
         intermediate_layer (tensor): intermediate layer for feature matching
-
     """
     with tf.variable_scope('discriminator_zz', reuse=reuse, custom_getter=getter):
         net = tf.concat([z, rec_z], axis=-1)
-
         name_net = 'layer_1'
+        with tf.variable_scope(name_net):
+            net = tf.layers.dense(net,
+                                  units=64,
+                                  kernel_initializer=init_kernel,
+                                  name='fc')
+
+            net = leakyReLu(net, 0.2, name='conv1/leaky_relu')
+            net = tf.layers.dropout(net, rate=0.2, name='dropout',
+                                    training=is_training)
+
+        name_net = 'layer_2'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(net,
                                   units=32,
                                   kernel_initializer=init_kernel,
                                   name='fc')
-            net = leakyReLu(net, 0.2, name='conv2/leaky_relu')
+
+            net = leakyReLu(net, 0.2, name='conv1/leaky_relu')
             net = tf.layers.dropout(net, rate=0.2, name='dropout',
                                     training=is_training)
-
         intermediate_layer = net
 
-        name_net = 'layer_2'
+        name_net = 'layer_3'
         with tf.variable_scope(name_net):
             logits = tf.layers.dense(net,
                                      units=1,

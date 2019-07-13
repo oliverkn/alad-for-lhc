@@ -1,5 +1,5 @@
 import pickle
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 from data.hlf_dataset_utils import feature_names
 
@@ -10,7 +10,7 @@ class HLFDataPreprocessor:
 
     def fit(self, x):
         # TODO: option to use RobustScaler
-        self.scaler = StandardScaler()
+        self.scaler = MinMaxScaler()
         self.scaler.fit(x)
 
     def set_mask(self, mask):
