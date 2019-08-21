@@ -1,5 +1,6 @@
 from ntuplizer_mod.ntuplizer import *
 import h5py
+import pickle
 
 
 class MuonSelector(AbstractSelectorModule):
@@ -133,5 +134,6 @@ print(names)
 #
 hdf5_file = h5py.File('/home/oliverkn/pro/real_data_test/test.hdf5', "w")
 hdf5_file.create_dataset('data', data=result, compression='gzip')
-# # hdf5_file.create_dataset('names', data=names, dtype=h5py.special_dtype(vlen=str), compression='gzip')
 hdf5_file.close()
+
+pickle.dump(names, open('/home/oliverkn/pro/real_data_test/test.pkl', 'wb'))
