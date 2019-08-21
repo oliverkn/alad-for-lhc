@@ -56,7 +56,7 @@ class Ntuplizer:
         # compute all quantities and add to result
         j = 0
         for q in self.quantities:
-            val = q.compute(values)
+            val = q.compute(values, n_events)
             s = q.get_size()
             result[:, j:j + s] = val
             j += s
@@ -67,7 +67,7 @@ class Ntuplizer:
 
 class AbstractQuantityModule(ABC):
     @abstractmethod
-    def compute(self, values): pass
+    def compute(self, values, n_events): pass
 
     @abstractmethod
     def get_keys(self): pass
