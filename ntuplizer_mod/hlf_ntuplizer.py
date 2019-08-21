@@ -1,6 +1,9 @@
-from ntuplizer_mod.ntuplizer import *
-import h5py
 import pickle
+
+import h5py
+
+from ntuplizer_mod.lorentz_vector import LorentzVector
+from ntuplizer_mod.ntuplizer import *
 
 
 class MuonSelector(AbstractSelectorModule):
@@ -143,10 +146,57 @@ class LeptonModule(AbstractQuantityModule):
                                  'METp', 'MT']
 
 
+class MuonsModule(AbstractQuantityModule):
+    KEY_MU_PT = 'recoMuons_muons__RECO.obj.pt_'
+    KEY_MU_ETA = 'recoMuons_muons__RECO.obj.eta_'
+    KEY_MU_PHI = 'recoMuons_muons__RECO.obj.phi_'
+    KEY_MU_MASS = 'recoMuons_muons__RECO.obj.mass_'
+
+    def compute(self, values, n_events):
+        mu_pt = values[self.KEY_MU_PT]
+        mu_eta = values[self.KEY_MU_ETA]
+        mu_phi = values[self.KEY_MU_PHI]
+        mu_mass = values[self.KEY_MU_MASS]
+
+        # result arrays
+        n_mu = np.zeros(n_events)
+        pt_mu = np.zeros(n_events)
+        mass_mu = np.zeros(n_events)
+
+        for i in range(n_events):
+            # select muon with P_T > 0.5
+            mask = mu_pt[i] > 0.5
+
+            n_mu[i] = np.sum(mask)
+
+            l_tot = LorentzVector()
+            # calculate the total P_T and mass
+            for j in range(mu_pt[i].shape[0]):
+                if mask[j]:
+                    l = LorentzVector()
+                    l.setptetaphim(mu_pt[i, j], mu_eta[i, j], mu_phi[i, j], mu_mass[i, j])
+                    l_tot += l
+
+            mass_mu[i] = l_tot.mass
+            pt_mu[i] = l_tot.pt
+
+        return np.stack([n_mu, pt_mu, mass_mu], axis=1)
+
+    def get_keys(self):
+        return [self.KEY_MU_PT, self.KEY_MU_PHI, self.KEY_MU_ETA, self.KEY_MU_MASS]
+
+    def get_size(self):
+        return 3
+
+    def get_names(self):
+        return ['n_mu', 'pt_mu', 'mass_mu']
+
+
 ntuplizer = Ntuplizer()
 ntuplizer.register_selector(MuonSelector())
 ntuplizer.register_quantity_module(JetModule())
 ntuplizer.register_quantity_module(LeptonModule())
+ntuplizer.register_quantity_module(MuonsModule())
 
 result, names = ntuplizer.convert('/home/oliverkn/pro/real_data_test/test.root')
 
