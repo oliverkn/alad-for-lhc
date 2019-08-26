@@ -59,6 +59,71 @@ def load_data_train(path, sm_list=None, weights=None):
     return data
 
 
+def load_data2(path, set='train', type='sm', shuffle=True, sm_list=[], bsm_list=[], sm_fraction=None,
+               bsm_fraction=None):
+    if type == 'sm':
+        sm_list = ['Wlnu', 'Zll', 'ttbar', 'qcd']
+        bsm_list = []
+    elif type == 'bsm':
+        sm_list = []
+        bsm_list = ['Ato4l', 'leptoquark', 'hToTauTau', 'hChToTauNu']
+    elif type == 'mix':
+        sm_list = ['Wlnu', 'Zll', 'ttbar', 'qcd']
+        bsm_list = ['Ato4l', 'leptoquark', 'hToTauTau', 'hChToTauNu']
+
+    # load files
+    list_data_sm = []
+    list_data_bsm = []
+
+    for name in sm_list:
+        file = os.path.join(path, name + '_' + set + '.npy')
+        list_data_sm.append(np.load(file))
+
+    for name in bsm_list:
+        file = os.path.join(path, name + '_' + set + '.npy')
+        list_data_bsm.append(np.load(file))
+
+    # apply sm fraction
+    if sm_fraction is not None:
+        min_len = np.amin([data_sm.shape[0] for data_sm in list_data_sm])
+        for i in range(len(list_data_sm)):
+            n = int(min_len * sm_fraction[i])
+            list_data_sm[i] = sklearn.utils.shuffle(list_data_sm[i])[0:n]
+
+    if bsm_fraction is not None:
+        min_len = np.amin([data_bsm.shape[0] for data_bsm in list_data_bsm])
+        for i in range(len(list_data_bsm)):
+            n = int(min_len * bsm_fraction[i])
+            list_data_bsm[i] = sklearn.utils.shuffle(list_data_bsm[i])[0:n]
+
+        # generate labels and mix files
+
+    data, labels = None, None
+
+    if len(list_data_sm) > 0:
+        data_sm = np.concatenate(list_data_sm)
+        labels_sm = np.zeros((data_sm.shape[0]))
+        data = data_sm
+        labels = labels_sm
+
+    if len(list_data_bsm) > 0:
+        data_bsm = np.concatenate(list_data_bsm)
+        labels_bsm = np.ones((data_bsm.shape[0]))
+
+        if data is None:
+            data = data_bsm
+            labels = labels_bsm
+        else:
+            data = np.concatenate([data, data_bsm])
+            labels = np.concatenate([labels, labels_bsm])
+
+    # shuffle data
+    if shuffle:
+        data, labels = sklearn.utils.shuffle(data, labels)
+
+    return data, labels
+
+
 def load_data(path, set='train', type='sm', shuffle=True, sm_list=[], bsm_list=[], balance_sm=True):
     if type == 'sm':
         sm_list = ['Wlnu', 'Zll', 'ttbar', 'qcd']
