@@ -38,8 +38,9 @@ vae_roc['hChToTauNu'] = pickle.load(open('alad_mod/vae_roc/VAE_all-in-one_v71_RO
 
 # %% load alad
 result_path = '/home/oliverkn/euler/results/hlf_set/alad/kdd_l12/'
+result_path = '/home/oliverkn/pro/results/4_4/alad/test_eval_6/'
 config_file = result_path + 'config.py'
-weights_file = result_path + 'model-1800000'
+weights_file = result_path + 'model-900000'
 
 # loading config
 spec = importlib.util.spec_from_file_location('config', config_file)
