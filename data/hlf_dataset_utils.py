@@ -59,6 +59,20 @@ def load_data_train(path, sm_list=None, weights=None):
     return data
 
 
+def load_data_train2(path, fractions=None):
+    data = load_data2(path, set='train', type='sm', sm_fraction=fractions)
+    return data
+
+
+def sample_composition(list_data, fraction):
+    N = np.amin([data.shape[0] / f for data, f in zip(list_data, fraction)])
+    N = int(N)
+    for i in range(len(list_data)):
+        list_data[i] = list_data[i][0:int(fraction[i] * N)]
+
+    return list_data
+
+
 def load_data2(path, set='train', type='sm', shuffle=True, sm_list=[], bsm_list=[], sm_fraction=None,
                bsm_fraction=None):
     if type == 'sm':
@@ -83,21 +97,14 @@ def load_data2(path, set='train', type='sm', shuffle=True, sm_list=[], bsm_list=
         file = os.path.join(path, name + '_' + set + '.npy')
         list_data_bsm.append(np.load(file))
 
-    # apply sm fraction
+    # apply fractions
     if sm_fraction is not None:
-        min_len = np.amin([data_sm.shape[0] for data_sm in list_data_sm])
-        for i in range(len(list_data_sm)):
-            n = int(min_len * sm_fraction[i])
-            list_data_sm[i] = sklearn.utils.shuffle(list_data_sm[i])[0:n]
+        list_data_sm = sample_composition(list_data_sm, sm_fraction)
 
     if bsm_fraction is not None:
-        min_len = np.amin([data_bsm.shape[0] for data_bsm in list_data_bsm])
-        for i in range(len(list_data_bsm)):
-            n = int(min_len * bsm_fraction[i])
-            list_data_bsm[i] = sklearn.utils.shuffle(list_data_bsm[i])[0:n]
+        list_data_bsm = sample_composition(list_data_bsm, bsm_fraction)
 
-        # generate labels and mix files
-
+    # generate labels and mix files
     data, labels = None, None
 
     if len(list_data_sm) > 0:

@@ -6,12 +6,13 @@ data_path = '/home/oliverkn/pro/data/hlf_set/'
 result_path = '/home/oliverkn/pro/results/4_4/alad/'
 
 exclude_features = ['nPhoton', 'LepEta']
-balance = True
 
+# training sets
 sm_list = ['Wlnu', 'Zll', 'ttbar', 'qcd']
-# sm_list = ['ttbar']
-
 weights = np.array([1, 1, 1, 1])
+
+# validation sets
+bsm_list = ['Ato4l', 'leptoquark', 'hToTauTau', 'hChToTauNu']
 
 # --------------------------------HYPERPARAMETERS--------------------------------
 input_dim = 21
@@ -25,7 +26,6 @@ do_spectral_norm = True
 allow_zz = True
 fm_degree = 1
 
-max_valid_samples = 500_000
 max_train_samples = 500_000_000  # inf
 
 # --------------------------------TRAIN_SETTINGS--------------------------------
@@ -34,18 +34,13 @@ model_file = ''
 
 max_epoch = 1000
 
-sm_write_freq = 1_000  # number of batches
-eval_freq = 10_000
-checkpoint_freq = 10_000
+sm_write_freq = 10_000  # number of batches
+eval_freq = 50_000
+checkpoint_freq = 50_000
 
 enable_sm = True
 enable_eval = True
 enable_checkpoint_save = True
-
-# evaluation
-enable_roc = False
-
-
 # --------------------------------MODELS--------------------------------
 
 def leakyReLu(x, alpha=0.2, name=None):
@@ -106,7 +101,6 @@ def encoder(x_inp, is_training=False, getter=None, reuse=False,
                                   units=latent_dim,
                                   kernel_initializer=init_kernel,
                                   name='fc')
-
 
     return net
 

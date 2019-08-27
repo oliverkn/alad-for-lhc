@@ -5,8 +5,8 @@ from data.hlf_dataset_utils import feature_names
 
 
 class HLFDataPreprocessor:
-    def __init__(self):
-        pass
+    def __init__(self, cont_mask=None, disc_mask=None):
+        self.__dict__.update(locals())
 
     def fit(self, x):
         # TODO: option to use RobustScaler
@@ -17,6 +17,12 @@ class HLFDataPreprocessor:
         self.mask = mask
 
     def transform(self, x):
+        # mask and split
+
+        # clip and encode
+
+        # scale cont
+
         x = self.scaler.transform(x)
 
         if self.mask is not None:

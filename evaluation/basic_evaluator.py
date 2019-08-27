@@ -58,6 +58,45 @@ class BasicEvaluator(AbstractEvaluator):
         names = [name + '_' + score_type for name in names]
         self.add_metric_module(names, recon_metrics)
 
+    def add_compare_vae_module(self, x_sm, x_bsm_dict, from_fpr=1e-6, to_fpr=1e-4, score_type='fm'):
+
+        vae_lr = {'Ato4l': 350, 'leptoquark': 80, 'hToTauTau': 45, 'hChToTauNu': 130}
+
+        def metrics(ad, epoch, logs):
+            score_sm = ad.get_anomaly_scores(x_sm, type=score_type)
+
+            lr_pos_dict = {}
+            auroc_dict = {}
+            m = 1
+            for name, x_bsm in x_bsm_dict.items():
+                score_bsm = ad.get_anomaly_scores(x_bsm, type=score_type)
+                scores = np.concatenate([score_sm, score_bsm])
+                labels = np.concatenate([np.zeros_like(score_sm), np.ones_like(score_bsm)])
+                fpr, tpr, _ = sklearn.metrics.roc_curve(labels, scores, pos_label=1)
+
+                # auroc
+                auroc = sklearn.metrics.auc(fpr, tpr)
+                auroc_dict[name] = auroc
+
+                # lr+
+                idx_from = np.argmax(fpr > from_fpr)
+                idx_to = np.argmax(fpr > to_fpr)
+
+                lr_pos = tpr / fpr
+                lr_pos_avg = np.average([lr_pos[idx_from:idx_to]])
+                lr_pos_dict[name] = lr_pos_avg
+
+                m *= lr_pos_avg / vae_lr[name]
+
+            m = m ** (1. / len(x_bsm_dict))  # taking geometric mean
+
+            return [*lr_pos_dict.values(), *auroc_dict.values(), m]
+
+        names = [name + '_LR+_' + score_type for name in x_bsm_dict.keys()] + \
+                [name + '_auroc_' + score_type for name in x_bsm_dict.keys()] + ['m_' + score_type]
+
+        self.add_metric_module(names, metrics)
+
     def get_metrics(self, eval_result):
         pass
 
