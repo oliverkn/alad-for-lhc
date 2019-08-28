@@ -188,6 +188,57 @@ class MaxLeptonModule(AbstractQuantityModule):
                                  'MET', 'METo', 'METp', 'MT']
 
 
+class MuonsModule(AbstractQuantityModule):
+    def __init__(self, term_suffix='mu', key_prefix='recoPFCandidates_particleFlow__RECO.obj'):
+        self.__dict__.update(locals())
+
+        self.KEY_PDGID = key_prefix + '.pdgId_'
+        self.KEY_PT = key_prefix + '.pt_'
+        self.KEY_ETA = key_prefix + '.eta_'
+        self.KEY_PHI = key_prefix + '.phi_'
+        self.KEY_MASS = key_prefix + '.mass_'
+
+    def compute(self, values, n_events):
+        pdgId = values[self.KEY_PDGID]
+        pt = values[self.KEY_PT]
+        eta = values[self.KEY_ETA]
+        phi = values[self.KEY_PHI]
+        mass = values[self.KEY_MASS]
+
+        # result arrays
+        n = np.zeros(n_events)
+        pt_tot = np.zeros(n_events)
+        mass_tot = np.zeros(n_events)
+
+        for i in range(n_events):
+            # select global muons with P_T > 0.5
+            mask = np.logical_and(pt[i] > 0.5, np.abs(pdgId[i]) == 13)
+
+            n[i] = np.sum(mask)
+
+            l_tot = LorentzVector()
+            # calculate the total P_T and mass
+            for j in range(pt[i].shape[0]):
+                if mask[j]:
+                    l = LorentzVector()
+                    l.setptetaphim(pt[i, j], eta[i, j], phi[i, j], mass[i, j])
+                    l_tot += l
+
+            mass_tot[i] = l_tot.mass
+            pt_tot[i] = l_tot.pt
+
+        return np.stack([n, pt_tot, mass_tot], axis=1)
+
+    def get_keys(self):
+        return [self.KEY_PT, self.KEY_PHI, self.KEY_ETA, self.KEY_MASS]
+
+    def get_size(self):
+        return 3
+
+    def get_names(self):
+        return ['n_' + self.term_suffix, 'pt_' + self.term_suffix, 'mass_' + self.term_suffix]
+
+
 class LeptonModule(AbstractQuantityModule):
     def __init__(self, term_suffix, key_prefix):
         self.__dict__.update(locals())
@@ -274,7 +325,7 @@ ntuplizer.register_selector(MuonSelector())
 ntuplizer.register_quantity_module(JetModule())
 ntuplizer.register_quantity_module(BTagModule())
 ntuplizer.register_quantity_module(MaxLeptonModule())
-ntuplizer.register_quantity_module(LeptonModule('mu', 'recoMuons_muons__RECO.obj'))
+ntuplizer.register_quantity_module(MuonsModule())
 ntuplizer.register_quantity_module(LeptonModule('ele', 'recoGsfElectrons_gsfElectrons__RECO.obj'))
 ntuplizer.register_quantity_module(ParticleCountModule('neu', 130))
 ntuplizer.register_quantity_module(ParticleCountModule('ch', 211))
