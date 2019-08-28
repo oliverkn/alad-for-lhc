@@ -104,4 +104,8 @@ if __name__ == '__main__':
     print('---------- STARTING TRAINING ----------')
     with tf.Session() as sess:
         alad = ALAD(config, sess)
+
+        if config.weights_file is not None:
+            alad.load(config.weights_file)
+
         alad.fit(x_train, evaluator=evaluator, max_epoch=config.max_epoch, logdir=result_dir)

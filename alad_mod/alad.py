@@ -5,6 +5,7 @@ import logging
 import tensorflow as tf
 import sklearn
 import numpy as np
+from scipy.stats import binned_statistic
 
 from core.skeleton import *
 
@@ -227,6 +228,14 @@ class ALAD(AbstractAnomalyDetector):
                                    keep_dims=False, name='d_loss')
                 score_fm = tf.squeeze(score_fm)
 
+                # weighted lp score
+                diff = x_pl - rec_x_ema
+                diff = tf.contrib.layers.flatten(diff)
+                diff = tf.divide(diff, 0.3 * tf.abs(x_pl) + 0.2)
+
+                score_wlp = tf.norm(diff, ord=1, axis=1, keep_dims=False, name='d_loss')
+                score_wlp = tf.squeeze(score_wlp)
+
         if config.enable_sm:
 
             with tf.name_scope('summary'):
@@ -277,14 +286,36 @@ class ALAD(AbstractAnomalyDetector):
             return self.sess.run(self.score_l2, feed_dict=feed_dict)
         elif type == 'ch':
             return self.sess.run(self.score_ch, feed_dict=feed_dict)
+        elif type == 'weighted_lp':
+            return self.sess.run(self.score_wlp, feed_dict=feed_dict)
         else:
             raise Exception()
+
+    def weighted_lp(self, x, ord=1, eps=1, a=0):
+        feed_dict = {self.x_pl: x,
+                     self.z_pl: np.random.normal(size=[x.shape[0], self.config.latent_dim]),
+                     self.is_training_pl: False}
+
+        diff = self.sess.run(self.x_pl - self.rec_x_ema, feed_dict=feed_dict)
+        diff = np.abs(diff)
+        diff = diff / (a * np.abs(x) + eps)
+
+        return np.sum(diff, axis=1)
+
+    # def p_test(self, x, x_train):
+    #     # compute variance for x_train recon
+    #     std_recon, bin_edges, _ = binned_statistic(x_i, x_recon_i, statistic=np.std, bins=n_bins, range=histo_range)
+    #
+    #     x_reco = self.recon(x)
+    #
+    #     return np.sum(diff, axis=1)
 
     def compute_all_scores(self, x):
         feed_dict = {self.x_pl: x,
                      self.z_pl: np.random.normal(size=[x.shape[0], self.config.latent_dim]),
                      self.is_training_pl: False}
-        scores = [self.score_fm, self.score_l1, self.score_l2, self.score_ch]
+        scores = [self.score_fm, self.score_l1, self.score_l2, self.score_wlp]
+
         return self.sess.run(scores, feed_dict=feed_dict)
 
     def fit(self, x, max_epoch, logdir, evaluator, model_file=None):
