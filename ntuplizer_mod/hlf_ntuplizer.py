@@ -33,6 +33,33 @@ class MuonSelector(AbstractSelectorModule):
         return 'muon pt>23 and iso<0.45'
 
 
+class BTagModule(AbstractQuantityModule):
+    """
+       https://twiki.cern.ch/twiki/bin/view/CMSPublic/BtagRecommendation2011OpenData
+    """
+
+    KEY_BTAG = 'recoJetedmRefToBaseProdTofloatsAssociationVector_combinedSecondaryVertexBJetTags__RECO.obj.data_'
+
+    def compute(self, values, n_events):
+        prob_b = values[self.KEY_BTAG]
+        n_bjet = np.zeros(n_events)
+
+        for i in range(n_events):
+            mask = prob_b[i] > 0.679
+            n_bjet[i] = np.sum(mask)
+
+        return np.stack([n_bjet], axis=1)
+
+    def get_keys(self):
+        return [self.KEY_BTAG]
+
+    def get_size(self):
+        return 1
+
+    def get_names(self):
+        return ['n_bjet']
+
+
 class JetModule(AbstractQuantityModule):
     """
        take all double_ak5PFJets_sigma_RECO elements with pT>30 and
@@ -42,30 +69,23 @@ class JetModule(AbstractQuantityModule):
     KEY_ETA = 'recoPFJets_ak5PFJets__RECO.obj.eta_'
     KEY_PHI = 'recoPFJets_ak5PFJets__RECO.obj.phi_'
     KEY_MASS = 'recoPFJets_ak5PFJets__RECO.obj.mass_'
-    KEY_BTAG = 'recoJetedmRefToBaseProdTofloatsAssociationVector_jetProbabilityBJetTags__RECO.obj.data_'
 
     def compute(self, values, n_events):
         pt = values[self.KEY_PT]
         eta = values[self.KEY_ETA]
         phi = values[self.KEY_PHI]
         mass = values[self.KEY_MASS]
-        prob_b = values[self.KEY_BTAG]
 
         HT = np.zeros(n_events)
         n_jet = np.zeros(n_events)
-        n_bjet = np.zeros(n_events)
         mass_jet = np.zeros(n_events)
 
         for i in range(n_events):
             # select jets with P_T > 30
             mask = pt[i] > 30
 
-            # TODO: b_tag
-            # mask_b = np.logical_and(prob_b[i] > 0, mask)
-
             HT[i] = np.sum(pt[i][mask])
             n_jet[i] = np.sum(mask)
-            # n_bjet[i] = np.sum(mask_b)
 
             # compute mass_jet
             l_tot = LorentzVector()
@@ -77,16 +97,16 @@ class JetModule(AbstractQuantityModule):
 
             mass_jet[i] = l_tot.mass
 
-        return np.stack([HT, mass_jet, n_jet, n_bjet], axis=1)
+        return np.stack([HT, mass_jet, n_jet], axis=1)
 
     def get_keys(self):
-        return [self.KEY_PT, self.KEY_ETA, self.KEY_PHI, self.KEY_MASS, self.KEY_BTAG]
+        return [self.KEY_PT, self.KEY_ETA, self.KEY_PHI, self.KEY_MASS]
 
     def get_size(self):
-        return 4
+        return 3
 
     def get_names(self):
-        return ['HT', 'mass_jet', 'n_jet', 'n_bjet']
+        return ['HT', 'mass_jet', 'n_jet']
 
 
 class MaxLeptonModule(AbstractQuantityModule):
@@ -184,7 +204,7 @@ class LeptonModule(AbstractQuantityModule):
         mass = values[self.KEY_MASS]
 
         # result arrays
-        n = np.zeros(n_events)
+        n = np.zeros(n_events)  # TODO only count global muons
         pt_tot = np.zeros(n_events)
         mass_tot = np.zeros(n_events)
 
@@ -234,7 +254,7 @@ class ParticleCountModule(AbstractQuantityModule):
         n = np.zeros(n_events)
 
         for i in range(n_events):
-            mask = np.abs(pdg_id[i]) == self.pdg_id
+            mask = np.abs(pdg_id[i]) == self.pdg_id  # take abs to capture anti-particles too
             n[i] = np.sum(mask)
 
         return np.stack([n], axis=1)
@@ -252,6 +272,7 @@ class ParticleCountModule(AbstractQuantityModule):
 ntuplizer = Ntuplizer()
 ntuplizer.register_selector(MuonSelector())
 ntuplizer.register_quantity_module(JetModule())
+ntuplizer.register_quantity_module(BTagModule())
 ntuplizer.register_quantity_module(MaxLeptonModule())
 ntuplizer.register_quantity_module(LeptonModule('mu', 'recoMuons_muons__RECO.obj'))
 ntuplizer.register_quantity_module(LeptonModule('ele', 'recoGsfElectrons_gsfElectrons__RECO.obj'))
