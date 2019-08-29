@@ -16,9 +16,9 @@ Two vector classes are available:
 # -----------------------------------------------------------------------------
 from __future__ import absolute_import
 
-from skhep.utils.py23 import *
+# from skhep.utils.py23 import *
 
-from skhep.utils.exceptions import *
+# from skhep.utils.exceptions import *
 
 from math import sqrt, atan2, cos, sin, acos, degrees, log, pi, sinh
 
@@ -258,7 +258,7 @@ class Vector3D(object):
         >>> v1 += v2
         """
         if not isinstance ( other ,  Vector3D ) :
-            raise InvalidOperationError("invalid operation '+=' between a 'Vector3D' and a '{0}'".format(other.__class__.__name__))
+            raise Exception("invalid operation '+=' between a 'Vector3D' and a '{0}'".format(other.__class__.__name__))
         self.__values[0] += other.__values[0]
         self.__values[1] += other.__values[1]
         self.__values[2] += other.__values[2]
@@ -274,7 +274,7 @@ class Vector3D(object):
         >>> v1 -= v2
         """
         if not isinstance ( other ,  Vector3D ) :
-            raise InvalidOperationError("invalid operation '-=' between a 'Vector3D' and a '{0}'".format(other.__class__.__name__))
+            raise Exception("invalid operation '-=' between a 'Vector3D' and a '{0}'".format(other.__class__.__name__))
         self.__values[0] -= other.__values[0]
         self.__values[1] -= other.__values[1]
         self.__values[2] -= other.__values[2]
@@ -305,7 +305,7 @@ class Vector3D(object):
         if isinstance ( other , ( int , float ) ) :
             return Vector3D.fromiterable ( [v * other for v in self.__values ] )
         else:
-            raise InvalidOperationError("invalid operation '*=' between a 'Vector3D' and a '{0}'".format(other.__class__.__name__))
+            raise Exception("invalid operation '*=' between a 'Vector3D' and a '{0}'".format(other.__class__.__name__))
 
     def __itruediv__(self, number):
         """Scaling of the vector by a number.
@@ -316,7 +316,7 @@ class Vector3D(object):
         >>> v /= 2
         """
         if not isinstance ( number , ( int , float ) ) :
-            raise InvalidOperationError("invalid operation '/=' between a 'Vector3D' and a '{0}'".format(number.__class__.__name__))
+            raise Exception("invalid operation '/=' between a 'Vector3D' and a '{0}'".format(number.__class__.__name__))
         elif 0 == number : raise ZeroDivisionError
         self *= ( 1.0/number )
         return self
@@ -363,7 +363,7 @@ class Vector3D(object):
         from skhep.math.numeric import isequal
 
         ## comparsion with scalar zero, very useful  in practice
-        if isinstance ( other , ( float , int , long ) ) and isequal ( other , 0 ) :
+        if isinstance ( other , ( float , int , int ) ) and isequal ( other , 0 ) :
             return isequal ( self[0] , 0 ) and isequal ( self[1] , 0 ) and isequal ( self[2] , 0 )
         elif not isinstance ( other , Vector3D) :
             return NotImplemented
@@ -859,7 +859,7 @@ class LorentzVector(object):
         >>> v1 += v2
         """
         if not isinstance ( other ,  LorentzVector ) :
-            raise InvalidOperationError("invalid operation '+=' between a 'LorentzVector' and a '{0}'".format(other.__class__.__name__))
+            raise Exception("invalid operation '+=' between a 'LorentzVector' and a '{0}'".format(other.__class__.__name__))
         self.__vector3d += other.__vector3d
         self.__t += other.__t
         return self
@@ -874,7 +874,7 @@ class LorentzVector(object):
         >>> v1 -= v2
         """
         if not isinstance ( other ,  LorentzVector ) :
-            raise InvalidOperationError("invalid operation '-=' between a 'LorentzVector' and a '{0}'".format(other.__class__.__name__))
+            raise Exception("invalid operation '-=' between a 'LorentzVector' and a '{0}'".format(other.__class__.__name__))
         self.__vector3d -= other.__vector3d
         self.__t -= other.__t
         return self
@@ -903,7 +903,7 @@ class LorentzVector(object):
         if isinstance ( other , ( int , float ) ) :
             return LorentzVector.fromiterable ( [v * other for v in self.tolist() ] )
         else:
-            raise InvalidOperationError("invalid operation '*=' between a 'LorentzVector' and a '{0}'".format(other.__class__.__name__))
+            raise Exception("invalid operation '*=' between a 'LorentzVector' and a '{0}'".format(other.__class__.__name__))
 
     def __itruediv__(self, number):
         """Scaling of the Lorentz vector with a number.
@@ -914,7 +914,7 @@ class LorentzVector(object):
         >>> v /= 2
         """
         if not isinstance ( number , ( int , float ) ) :
-            raise InvalidOperationError("invalid operation '/=' between a 'LorentzVector' and a '{0}'".format(number.__class__.__name__))
+            raise Exception("invalid operation '/=' between a 'LorentzVector' and a '{0}'".format(number.__class__.__name__))
         elif 0 == number : raise ZeroDivisionError
         self *= ( 1.0/number )
         return self
@@ -961,7 +961,7 @@ class LorentzVector(object):
         from skhep.math.numeric import isequal
 
         ## comparsion with scalar zero, very useful  in practice
-        if isinstance ( other , ( float , int , long ) ) and isequal ( other , 0 ) :
+        if isinstance ( other , ( float , int , int ) ) and isequal ( other , 0 ) :
             return isequal ( self[0] , 0 ) and isequal ( self[1] , 0 ) and isequal ( self[2] , 0 ) \
              and isequal ( self[3] , 0 )
         elif not isinstance ( other , LorentzVector ) :
