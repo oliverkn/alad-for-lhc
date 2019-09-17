@@ -318,17 +318,17 @@ class ALAD(AbstractAnomalyDetector):
 
         return self.sess.run(scores, feed_dict=feed_dict)
 
-    def fit(self, x, max_epoch, logdir, evaluator, model_file=None):
+    def fit(self, x, max_epoch, logdir, evaluator, weights_file=None):
         sess = self.sess
         saver = tf.train.Saver(max_to_keep=1000)
         writer = tf.summary.FileWriter(logdir, sess.graph)
 
-        if model_file is None:
+        if weights_file is None:
             # run initialization
             sess.run(tf.global_variables_initializer())
             sess.run(tf.assign(self.global_step, 0))
         else:
-            self.load(model_file)
+            self.load(weights_file)
 
         batch_size = self.config.batch_size
         nr_batches_train = int(x.shape[0] / batch_size)

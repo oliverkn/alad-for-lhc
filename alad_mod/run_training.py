@@ -87,7 +87,7 @@ if __name__ == '__main__':
     print('---------- INIT EVALUATOR ----------')
     evaluator = BasicEvaluator()
 
-    score_types = ['fm', 'l1']#, 'l2', 'ch']
+    score_types = ['fm', 'l1']  # , 'l2', 'ch']
     for type in score_types:
         evaluator.add_compare_vae_module(x_valid_sm, x_valid_bsm_dict, score_type=type)
 
@@ -104,8 +104,5 @@ if __name__ == '__main__':
     print('---------- STARTING TRAINING ----------')
     with tf.Session() as sess:
         alad = ALAD(config, sess)
-
-        if config.weights_file is not None:
-            alad.load(config.weights_file)
-
-        alad.fit(x_train, evaluator=evaluator, max_epoch=config.max_epoch, logdir=result_dir)
+        alad.fit(x_train, evaluator=evaluator, max_epoch=config.max_epoch,
+                 logdir=result_dir, weights_file=config.weights_file)

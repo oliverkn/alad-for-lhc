@@ -29,14 +29,13 @@ fm_degree = 1
 max_train_samples = 500_000_000  # inf
 
 # --------------------------------TRAIN_SETTINGS--------------------------------
-load_model = False
-model_file = ''
+weights_file = '/home/oliverkn/pro/results/4_4/alad/test_eval_6/model-1000000'
 
 max_epoch = 1000
 
-sm_write_freq = 10_000  # number of batches
-eval_freq = 50_000
-checkpoint_freq = 50_000
+sm_write_freq = 10_00  # number of batches
+eval_freq = 50_00
+checkpoint_freq = 50_00
 
 enable_sm = True
 enable_eval = True
