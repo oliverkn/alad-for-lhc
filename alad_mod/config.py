@@ -5,13 +5,15 @@ import numpy as np
 data_path = '/home/oliverkn/pro/data/hlf_set/'
 result_path = '/home/oliverkn/pro/results/4_4/alad/'
 
+# preprocessor
 exclude_features = ['nPhoton', 'LepEta']
 
-# training sets
-sm_list = ['Wlnu', 'Zll', 'ttbar', 'qcd']
-weights = np.array([1, 1, 1, 1])
+# training set
+sm_fraction = [0.592, 0.338, 0.067, 0.003]
+# sm_list = ['Wlnu', 'Zll', 'ttbar', 'qcd']
+# weights = np.array([1, 1, 1, 1])
 
-# validation sets
+# validation set
 bsm_list = ['Ato4l', 'leptoquark', 'hToTauTau', 'hChToTauNu']
 
 # --------------------------------HYPERPARAMETERS--------------------------------
@@ -26,10 +28,11 @@ do_spectral_norm = True
 allow_zz = True
 fm_degree = 1
 
-max_train_samples = 500_000_000  # inf
+max_train_samples = 100_000_000  # inf
 
 # --------------------------------TRAIN_SETTINGS--------------------------------
-weights_file = '/home/oliverkn/pro/results/4_4/alad/test_eval_6/model-1000000'
+weights_file = None
+# weights_file = '/home/oliverkn/pro/results/4_4/alad/test_eval_6/model-1000000'
 
 max_epoch = 1000
 
@@ -40,6 +43,8 @@ checkpoint_freq = 50_00
 enable_sm = True
 enable_eval = True
 enable_checkpoint_save = True
+
+
 # --------------------------------MODELS--------------------------------
 
 def leakyReLu(x, alpha=0.2, name=None):
@@ -70,31 +75,20 @@ def encoder(x_inp, is_training=False, getter=None, reuse=False,
         name_net = 'layer_1'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(x_inp,
-                                  units=256,
-                                  kernel_initializer=init_kernel,
-                                  name='fc')
-            net = leakyReLu(net)
-            # net = tf.nn.tanh(net)
-
-        name_net = 'layer_2'
-        with tf.variable_scope(name_net):
-            net = tf.layers.dense(net,
-                                  units=128,
-                                  kernel_initializer=init_kernel,
-                                  name='fc')
-            net = leakyReLu(net)
-            # net = tf.nn.tanh(net)
-
-        name_net = 'layer_3'
-        with tf.variable_scope(name_net):
-            net = tf.layers.dense(net,
                                   units=64,
                                   kernel_initializer=init_kernel,
                                   name='fc')
             net = leakyReLu(net)
-            # net = tf.nn.tanh(net)
 
-        name_net = 'layer_4'
+        name_net = 'layer_2'
+        with tf.variable_scope(name_net):
+            net = tf.layers.dense(x_inp,
+                                  units=64,
+                                  kernel_initializer=init_kernel,
+                                  name='fc')
+            net = leakyReLu(net)
+
+        name_net = 'layer_out'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(net,
                                   units=latent_dim,
@@ -131,20 +125,12 @@ def decoder(z_inp, is_training=False, getter=None, reuse=False):
         name_net = 'layer_2'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(net,
-                                  units=128,
+                                  units=64,
                                   kernel_initializer=init_kernel,
                                   name='fc')
             net = tf.nn.relu(net)
 
-        name_net = 'layer_3'
-        with tf.variable_scope(name_net):
-            net = tf.layers.dense(net,
-                                  units=256,
-                                  kernel_initializer=init_kernel,
-                                  name='fc')
-            net = tf.nn.relu(net)
-
-        name_net = 'layer_4'
+        name_net = 'layer_out'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(net,
                                   units=input_dim,
@@ -157,20 +143,16 @@ def decoder(z_inp, is_training=False, getter=None, reuse=False):
 def discriminator_xz(x_inp, z_inp, is_training=False, getter=None, reuse=False,
                      do_spectral_norm=False):
     """ Discriminator architecture in tensorflow
-
     Discriminates between pairs (E(x), x) and (z, G(z))
-
     Args:
         x_inp (tensor): input data for the discriminator.
         z_inp (tensor): input variable in the latent space
         is_training (bool): for batch norms and dropouts
         getter: for exponential moving average during inference
         reuse (bool): sharing variables or not
-
     Returns:
         logits (tensor): last activation layer of the discriminator (shape 1)
         intermediate_layer (tensor): intermediate layer for feature matching
-
     """
     with tf.variable_scope('discriminator_xz', reuse=reuse, custom_getter=getter):
         # D(x)
@@ -217,20 +199,16 @@ def discriminator_xz(x_inp, z_inp, is_training=False, getter=None, reuse=False,
 def discriminator_xx(x, rec_x, is_training=False, getter=None, reuse=False,
                      do_spectral_norm=False):
     """ Discriminator architecture in tensorflow
-
     Discriminates between (x,x) and (x,rec_x)
-
     Args:
         x (tensor): input from the data space
         rec_x (tensor): reconstructed data
         is_training (bool): for batch norms and dropouts
         getter: for exponential moving average during inference
         reuse (bool): sharing variables or not
-
     Returns:
         logits (tensor): last activation layer of the discriminator
         intermediate_layer (tensor): intermediate layer for feature matching
-
     """
     with tf.variable_scope('discriminator_xx', reuse=reuse, custom_getter=getter):
         net = tf.concat([x, rec_x], axis=1)
@@ -259,20 +237,16 @@ def discriminator_xx(x, rec_x, is_training=False, getter=None, reuse=False,
 def discriminator_zz(z, rec_z, is_training=False, getter=None, reuse=False,
                      do_spectral_norm=False):
     """ Discriminator architecture in tensorflow
-
     Discriminates between (z,z) and (z,rec_z)
-
     Args:
         z (tensor): input from the latent space
         rec_z (tensor): reconstructed data
         is_training (bool): for batch norms and dropouts
         getter: for exponential moving average during inference
         reuse (bool): sharing variables or not
-
     Returns:
         logits (tensor): last activation layer of the discriminator
         intermediate_layer (tensor): intermediate layer for feature matching
-
     """
     with tf.variable_scope('discriminator_zz', reuse=reuse, custom_getter=getter):
         net = tf.concat([z, rec_z], axis=-1)
@@ -280,7 +254,7 @@ def discriminator_zz(z, rec_z, is_training=False, getter=None, reuse=False,
         name_net = 'layer_1'
         with tf.variable_scope(name_net):
             net = tf.layers.dense(net,
-                                  units=32,
+                                  units=latent_dim,
                                   kernel_initializer=init_kernel,
                                   name='fc')
             net = leakyReLu(net, 0.2, name='conv2/leaky_relu')

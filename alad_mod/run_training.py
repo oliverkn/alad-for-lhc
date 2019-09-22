@@ -38,7 +38,9 @@ if __name__ == '__main__':
         result_dir = os.path.join(config.result_path, args.resultdir)
 
     print('---------- LOADING DATA ----------')
-    x_train = load_data_train(config.data_path, config.sm_list, config.weights)
+    # x_train = load_data_train(config.data_path, config.sm_list, config.weights)
+    x_train, _ = load_data2(config.data_path, set='train', type='sm', sm_fraction=config.sm_fraction)
+
     print('training data shape:' + str(x_train.shape))
 
     # load validation data sets
