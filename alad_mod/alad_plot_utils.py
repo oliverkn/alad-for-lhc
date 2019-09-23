@@ -41,7 +41,6 @@ class AladPlotter:
 
     def load_alad(self, result_path, weights_file):
         config_file = result_path + 'config.py'
-        weights_file = result_path + 'model-900000'
 
         # loading config
         spec = importlib.util.spec_from_file_location('config', config_file)
@@ -96,10 +95,9 @@ class AladPlotter:
 
         plt.show()
 
-    def plot_anomaly_scores(self):
+    def plot_anomaly_scores(self, score_type):
         dataset_list = ['sm_mix', 'Ato4l', 'leptoquark', 'hToTauTau', 'hChToTauNu']
-        score_type = 'fm'
-        max_samples = 1_000_00
+        max_samples = 10_000_00
         n_bins = 100
         quantile = 1e-5
 

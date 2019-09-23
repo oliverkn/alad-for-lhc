@@ -18,6 +18,7 @@ class Ntuplizer:
         self.quantities.append(q)
 
     def convert(self, input_file):
+        print('loading file: ' + input_file)
         f = ur.open(input_file)
         e = f['Events']
 
@@ -41,6 +42,7 @@ class Ntuplizer:
                     continue
                 values[key] = e.array(key)
 
+        print('running selector modules')
         # compute selection mask
         mask = np.ones(n_events, dtype=bool)
         for selector in self.selectors:
@@ -50,6 +52,7 @@ class Ntuplizer:
         for key, value in values.items():
             values[key] = values[key][mask]
 
+        print('running quantity modules')
         n_events = np.sum(mask)
         result = np.empty(shape=(n_events, n_quantities))
         names = []
