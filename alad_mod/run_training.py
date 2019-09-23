@@ -93,16 +93,6 @@ if __name__ == '__main__':
     for type in score_types:
         evaluator.add_compare_vae_module(x_valid_sm, x_valid_bsm_dict, score_type=type)
 
-    # for bsm in config.bsm_list:
-    #     x = np.concatenate([x_valid_sm, x_valid_bsm_dict[bsm]])
-    #     y = np.concatenate([np.zeros(x_valid_sm.shape[0]), np.ones(x_valid_bsm_dict[bsm].shape[0])])
-    #     evaluator.add_auroc_module(x, y, 'fm')
-
-    # score_types = ['fm', 'l1', 'l2', 'ch']
-    # for type in score_types:
-    #     evaluator.add_auroc_module(x_valid, y_valid, type)
-    #     evaluator.add_anomaly_score_module(x_valid_sm, x_valid_bsm, type)
-
     print('---------- STARTING TRAINING ----------')
     with tf.Session() as sess:
         alad = ALAD(config, sess)
