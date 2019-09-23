@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 import pickle
 
 from alad_mod.alad import ALAD
-from data.hlf_dataset_utils import load_data, feature_names, load_data2
-from data.hlf_preprocessing import HLFDataPreprocessor, load
+from data.hlf_dataset_utils import load_data, feature_names
+from data.hlf_preprocessing import HLFDataPreprocessorV2, load
 
 # %% load data
 data_path = '/home/oliverkn/pro/data/hlf_set'
@@ -24,7 +24,7 @@ sm_fraction = [0.592, 0.338, 0.067, 0.003]
 
 roc_data = {}
 for bsm in bsm_list:
-    x, y = load_data2(data_path, set='valid', type='custom', sm_list=['sm_mix'], bsm_list=[bsm])
+    x, y = load_data(data_path, set='valid', type='custom', sm_list=['sm_mix'], bsm_list=[bsm])
     roc_data[bsm] = (x, y)
 
 vae_roc = {}
@@ -57,6 +57,8 @@ ad.load(weights_file)
 
 # %% plot ROC
 target_fpr = 1e-5
+
+# compute scores for sm_mix and bsm
 
 fig, ax_arr = plt.subplots(2, 2, figsize=(12, 12))
 for i, bsm in enumerate(bsm_list):

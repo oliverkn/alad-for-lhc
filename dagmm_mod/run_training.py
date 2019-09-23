@@ -8,7 +8,7 @@ from dagmm_mod.dagmm import DAGMM
 from dagmm_mod.evaluator import Evaluator
 
 from data.hlf_dataset_utils import *
-from data.hlf_preprocessing import HLFDataPreprocessor
+from data.hlf_preprocessing import HLFDataPreprocessorV2
 
 if __name__ == '__main__':
 

@@ -58,7 +58,7 @@ class BasicEvaluator(AbstractEvaluator):
         names = [name + '_' + score_type for name in names]
         self.add_metric_module(names, recon_metrics)
 
-    def add_compare_vae_module(self, x_sm, x_bsm_dict, from_fpr=1e-6, to_fpr=1e-4, score_type='fm'):
+    def add_compare_vae_module(self, x_sm, x_bsm_dict, target_fpr=1e-5, score_type='fm'):
 
         vae_lr = {'Ato4l': 350, 'leptoquark': 80, 'hToTauTau': 45, 'hChToTauNu': 130}
 
@@ -79,14 +79,10 @@ class BasicEvaluator(AbstractEvaluator):
                 auroc_dict[name] = auroc
 
                 # lr+
-                idx_from = np.argmax(fpr > from_fpr)
-                idx_to = np.argmax(fpr > to_fpr)
-
-                lr_pos = tpr / fpr
-                lr_pos_avg = np.average([lr_pos[idx_from:idx_to]])
-                lr_pos_dict[name] = lr_pos_avg
-
-                m *= lr_pos_avg / vae_lr[name]
+                idx = np.argmax(fpr > target_fpr)
+                lr_pos = tpr[idx] / fpr[idx]
+                lr_pos_dict[name] = lr_pos
+                m *= lr_pos / vae_lr[name]
 
             m = m ** (1. / len(x_bsm_dict))  # taking geometric mean
 

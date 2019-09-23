@@ -7,8 +7,8 @@ import tensorflow as tf
 import numpy as np
 
 from alad_mod.alad import ALAD
-from data.hlf_dataset_utils import load_data2, load_data_train, build_mask
-from data.hlf_preprocessing import HLFDataPreprocessor
+from data.hlf_dataset_utils import load_data, build_mask
+from data.hlf_preprocessing import HLFDataPreprocessorV2
 from evaluation.basic_evaluator import BasicEvaluator
 
 if __name__ == '__main__':
@@ -38,24 +38,23 @@ if __name__ == '__main__':
         result_dir = os.path.join(config.result_path, args.resultdir)
 
     print('---------- LOADING DATA ----------')
-    # x_train = load_data_train(config.data_path, config.sm_list, config.weights)
-    x_train, _ = load_data2(config.data_path, set='train', type='sm', sm_fraction=config.sm_fraction)
-
-    print('training data shape:' + str(x_train.shape))
-
-    # load validation data sets
-    x_valid_sm, _ = load_data2(config.data_path, set='valid', type='custom', sm_list=['sm_mix'])
-    x_valid_bsm_dict = {}
-    for bsm in config.bsm_list:
-        x, y = load_data2(config.data_path, set='valid', type='custom', bsm_list=[bsm])
-        x_valid_bsm_dict[bsm] = x
-        print(bsm + ' data shape:' + str(x.shape))
+    x_train = load_data(config.data_path, name='sm_mix', set='train')
 
     if x_train.shape[0] > config.max_train_samples:
         print('taking subset for training')
         x_train = x_train[:config.max_train_samples]
-
     print('training data shapes:' + str(x_train.shape))
+
+    # load validation data sets
+    x_valid_sm = load_data(config.data_path, name='sm_mix', set='valid')
+    x_valid_bsm_dict = {}
+    for bsm in config.bsm_list:
+        x = load_data(config.data_path, name=bsm, set='valid')
+        if x.shape[0] > config.max_valid_samples:
+            x = x[:config.max_valid_samples]
+        x_valid_bsm_dict[bsm] = x
+
+        print(bsm + ' data shape:' + str(x.shape))
 
     print('---------- CREATING RESULT DIRECTORY ----------')
 
@@ -70,12 +69,13 @@ if __name__ == '__main__':
     shutil.copy(args.config, os.path.join(result_dir, 'config.py'))
 
     print('---------- PREPROCESS DATA ----------')
-    preprocessor = HLFDataPreprocessor()
+    cont_mask = build_mask(config.cont_list)
+    disc_mask = build_mask(config.disc_list)
 
-    print('fitting scaler')
+    preprocessor = HLFDataPreprocessorV2(cont_mask, disc_mask, config.categories)
+
+    print('fitting preprocessor')
     preprocessor.fit(x_train)
-    mask = build_mask(config.exclude_features)
-    preprocessor.set_mask(mask)
 
     print('transforming data')
     x_train = preprocessor.transform(x_train)

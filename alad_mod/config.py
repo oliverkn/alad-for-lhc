@@ -2,22 +2,30 @@ import tensorflow as tf
 import numpy as np
 
 # --------------------------------DATA--------------------------------
-data_path = '/home/oliverkn/pro/data/hlf_set/'
+data_path = '/home/oliverkn/pro/data/hlf_set_new/'
 result_path = '/home/oliverkn/pro/results/4_4/alad/'
 
 # preprocessor
-exclude_features = ['nPhoton', 'LepEta']
+cont_list = ['HT', 'METp', 'METo', 'MT', 'nJets', 'bJets', 'allJetMass', 'LepPt', 'LepIsoCh', 'LepIsoGamma',
+             'LepIsoNeu', 'allMuMass', 'allMuPt', 'allEleMass', 'allElePt', 'nChHad', 'nNeuHad']
+
+disc_list = ['LepCharge', 'LepIsEle', 'nMu', 'nEle']
+
+categories = [None] * len(disc_list)
+categories[0] = [-1, 1]
+categories[1] = [0, 1]
+categories[2] = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+categories[3] = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 
 # training set
-sm_fraction = [0.592, 0.338, 0.067, 0.003]
-# sm_list = ['Wlnu', 'Zll', 'ttbar', 'qcd']
-# weights = np.array([1, 1, 1, 1])
+max_train_samples = 100_000_000  # inf
 
 # validation set
 bsm_list = ['Ato4l', 'leptoquark', 'hToTauTau', 'hChToTauNu']
+max_valid_samples = 100_000
 
 # --------------------------------HYPERPARAMETERS--------------------------------
-input_dim = 21
+input_dim = 39
 latent_dim = 12
 
 learning_rate = 1e-5
@@ -27,8 +35,6 @@ ema_decay = 0.999
 do_spectral_norm = True
 allow_zz = True
 fm_degree = 1
-
-max_train_samples = 100_000_000  # inf
 
 # --------------------------------TRAIN_SETTINGS--------------------------------
 weights_file = None

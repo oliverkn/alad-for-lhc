@@ -1,30 +1,33 @@
 import os
 import importlib.util
-import math
 
 import tensorflow as tf
 from sklearn.metrics import roc_curve, roc_auc_score
 import numpy as np
-from scipy.stats import binned_statistic
 import matplotlib.pyplot as plt
 import pickle
 
 from alad_mod.alad import ALAD
-from data.hlf_dataset_utils import load_data, feature_names, load_data2
-from data.hlf_preprocessing import HLFDataPreprocessor, load
+from data.hlf_dataset_utils import load_data
+from data.hlf_preprocessing import load
 
 
 class AladPlotter:
     def __init__(self):
         pass
 
-    def load_data(self, data_path='/home/oliverkn/pro/data/hlf_set',
-                  bsm_list=['Ato4l', 'leptoquark', 'hToTauTau', 'hChToTauNu']):
-        roc_data = {}
-        for bsm in bsm_list:
-            x, y = load_data2(data_path, set='valid', type='custom', sm_list=['sm_mix'], bsm_list=[bsm])
-            roc_data[bsm] = (x, y)
+    def load_data(self, data_path, max_samples=int(1e6), bsm_list=['Ato4l', 'leptoquark', 'hToTauTau', 'hChToTauNu']):
+        # load smmix, and bsm_list
+        data = {}
+        data['sm_mix'] = load_data(data_path, name='sm_mix', set='valid')
 
+        for bsm in bsm_list:
+            x = load_data(data_path, name=bsm, set='valid')
+            if x.shape[0] > max_samples:
+                x = x[:max_samples]
+            data[bsm] = x
+
+        # loading vae reference
         vae_roc = {}
         vae_roc['Ato4l'] = pickle.load(open('vae_roc/VAE_all-in-one_v71_ROC1_dict_Ato4l.pkl', 'rb'),
                                        encoding='latin1')
@@ -35,9 +38,10 @@ class AladPlotter:
         vae_roc['hChToTauNu'] = pickle.load(open('vae_roc/VAE_all-in-one_v71_ROC1_dict_hChToTauNu.pkl', 'rb'),
                                             encoding='latin1')
 
-        self.roc_data = roc_data
+        self.data = data
         self.vae_roc = vae_roc
         self.data_path = data_path
+        self.bsm_list = bsm_list
 
     def load_alad(self, result_path, weights_file):
         config_file = result_path + 'config.py'
@@ -58,21 +62,26 @@ class AladPlotter:
         self.preprocessor = preprocessor
         self.ad = ad
 
-    def plot_roc(self):
-        target_fpr = 1e-5
+    def plot_roc(self, target_fpr=1e-5):
+        # compute smmix scores once
+        x = self.data['sm_mix']
+        x = self.preprocessor.transform(x)
+        smmix_scores = self.ad.compute_all_scores(x)
 
         fig, ax_arr = plt.subplots(2, 2, figsize=(12, 12))
-        for i, bsm in enumerate(self.roc_data.keys()):
-            x, y = self.roc_data[bsm]
-
+        for i, bsm in enumerate(self.bsm_list):
+            # compute bsm scores
+            x = self.data[bsm]
             x = self.preprocessor.transform(x)
-            print('data shape:' + str(x.shape))
+            bsm_scores = self.ad.compute_all_scores(x)
+
+            y = np.concatenate([np.zeros_like(smmix_scores[0]), np.ones_like(bsm_scores[0])])
 
             ax = ax_arr[i // 2, i % 2]
-
-            scores = self.ad.compute_all_scores(x)
             score_names = ['fm', 'l1', 'l2', 'weighted_lp']
-            for score, name in zip(scores, score_names):
+
+            for j, name in enumerate(score_names):
+                score = np.concatenate([smmix_scores[j], bsm_scores[j]])
                 fpr, tpr, _ = roc_curve(y, score, pos_label=1)
                 # auroc = roc_auc_score(y, score)
                 idx = np.argmax(fpr > target_fpr)

@@ -12,7 +12,7 @@ import pickle
 
 from alad_mod.alad import ALAD
 from data.hlf_dataset_utils import load_data, feature_names, load_data2
-from data.hlf_preprocessing import HLFDataPreprocessor, load
+from data.hlf_preprocessing import HLFDataPreprocessorV2, load
 
 #paths
 result_path = '/home/oliverkn/pro/results/4_4/alad/test_if_result_works/'
