@@ -70,7 +70,10 @@ if __name__ == '__main__':
 
     print('---------- PREPROCESS DATA ----------')
     cont_mask = build_mask(config.cont_list)
-    disc_mask = build_mask(config.disc_list)
+    if config.disc_list is None:
+        disc_mask = None
+    else:
+        disc_mask = build_mask(config.disc_list)
 
     preprocessor = HLFDataPreprocessorV2(cont_mask, disc_mask, config.categories)
 
