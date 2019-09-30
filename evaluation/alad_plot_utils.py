@@ -2,26 +2,26 @@ import os
 import importlib.util
 
 import tensorflow as tf
-from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn.metrics import roc_curve
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
 from alad_mod.alad import ALAD
-from data.hlf_dataset_utils import load_data
+from data.hlf_dataset_utils import load_data, feature_names
 from data.hlf_preprocessing import load
 
 
 class AladPlotter:
     def __init__(self):
-        pass
+        self.bsm_list = ['Ato4l', 'leptoquark', 'hToTauTau', 'hChToTauNu', 'Wprime', 'Zprime']
 
-    def load_data(self, data_path, max_samples=int(1e6), bsm_list=['Ato4l', 'leptoquark', 'hToTauTau', 'hChToTauNu']):
+    def load_data(self, data_path, max_samples=int(1e9)):
         # load smmix, and bsm_list
         data = {}
         data['sm_mix'] = load_data(data_path, name='sm_mix', set='valid')
 
-        for bsm in bsm_list:
+        for bsm in self.bsm_list:
             x = load_data(data_path, name=bsm, set='valid')
             if x.shape[0] > max_samples:
                 x = x[:max_samples]
@@ -37,11 +37,14 @@ class AladPlotter:
                                            encoding='latin1')
         vae_roc['hChToTauNu'] = pickle.load(open('vae_roc/VAE_all-in-one_v71_ROC1_dict_hChToTauNu.pkl', 'rb'),
                                             encoding='latin1')
+        vae_roc['Wprime'] = pickle.load(open('vae_roc/VAE_all-in-one_v71_ROC1_dict_Wprime.pkl', 'rb'),
+                                        encoding='latin1')
+        vae_roc['Zprime'] = pickle.load(open('vae_roc/VAE_all-in-one_v71_ROC1_dict_Zprime.pkl', 'rb'),
+                                        encoding='latin1')
 
         self.data = data
         self.vae_roc = vae_roc
         self.data_path = data_path
-        self.bsm_list = bsm_list
 
     def load_alad(self, result_path, weights_file):
         config_file = result_path + 'config.py'
@@ -68,7 +71,7 @@ class AladPlotter:
         x = self.preprocessor.transform(x)
         smmix_scores = self.ad.compute_all_scores(x)
 
-        fig, ax_arr = plt.subplots(2, 2, figsize=(12, 12))
+        fig, ax_arr = plt.subplots(3, 2, figsize=(12, 18))
         for i, bsm in enumerate(self.bsm_list):
             # compute bsm scores
             x = self.data[bsm]
@@ -156,3 +159,77 @@ class AladPlotter:
         ax_arr[1].legend()
 
         plt.show()
+
+
+sim_hlf_plot_settings = {}
+
+settings_default_lin = {'range': 'auto', 'yscale': 'linear', 'int': False}
+settings_default_log = {'range': 'auto', 'yscale': 'log', 'int': False}
+settings_default_int = {'range': 'auto', 'yscale': 'linear', 'int': True, 'bin_size': 1}
+
+sim_hlf_plot_settings['HT'] = settings_default_log
+sim_hlf_plot_settings['METp'] = settings_default_lin
+sim_hlf_plot_settings['METo'] = settings_default_lin
+sim_hlf_plot_settings['MT'] = settings_default_lin
+sim_hlf_plot_settings['nJets'] = settings_default_int
+sim_hlf_plot_settings['bJets'] = settings_default_int
+sim_hlf_plot_settings['allJetMass'] = settings_default_log
+sim_hlf_plot_settings['LepPt'] = settings_default_lin
+sim_hlf_plot_settings['LepEta'] = settings_default_lin
+sim_hlf_plot_settings['LepIsoCh'] = settings_default_log
+sim_hlf_plot_settings['LepIsoGamma'] = settings_default_log
+sim_hlf_plot_settings['LepIsoNeu'] = settings_default_log
+sim_hlf_plot_settings['LepIsoGamma'] = settings_default_log
+sim_hlf_plot_settings['LepCharge'] = {'range': (-1, 1), 'yscale': 'linear', 'int': True}
+sim_hlf_plot_settings['LepIsEle'] = {'range': (0, 1), 'yscale': 'linear', 'int': True}
+sim_hlf_plot_settings['nMu'] = settings_default_int
+sim_hlf_plot_settings['allMuMass'] = settings_default_log
+sim_hlf_plot_settings['allMuPt'] = settings_default_log
+sim_hlf_plot_settings['nEle'] = settings_default_int
+sim_hlf_plot_settings['allEleMass'] = settings_default_log
+sim_hlf_plot_settings['allElePt'] = settings_default_log
+sim_hlf_plot_settings['nChHad'] = settings_default_int
+sim_hlf_plot_settings['nNeuHad'] = settings_default_int
+sim_hlf_plot_settings['nPhoton'] = settings_default_int
+
+
+def plot_sim_hlf(datasets, labels, quantile=0.01, bins=100):
+    f, ax_arr = plt.subplots(23 // 3 + 1, 3, figsize=(18, 40))
+
+    for i, name in enumerate(feature_names):
+        ax = ax_arr[int(i / 3), i % 3]
+
+        settings = sim_hlf_plot_settings[name]
+
+        # determine range
+        if settings['range'] == 'auto':
+            hist_range = [np.inf, -np.inf]
+            for j in range(len(datasets)):
+                values = datasets[j][:, i]
+                hist_range[0] = np.minimum(hist_range[0], np.quantile(values, quantile))
+                hist_range[1] = np.maximum(hist_range[1], np.quantile(values, 1 - quantile))
+        else:
+            hist_range = settings['range']
+
+        for j in range(len(datasets)):
+            values = datasets[j][:, i]
+            label = labels[j]
+
+            if settings['int']:
+                bin_edges = np.arange(int(hist_range[0]), int(hist_range[1]) + 2) - 0.5
+                bin_content, bin_edges = np.histogram(values, bins=bin_edges)
+                bin_content = bin_content / values.shape[0]
+                y = np.append(bin_content, bin_content[-1])
+                ax.step(bin_edges, y, label=label, where='post')
+                # ax.step(bin_edges[1:], bin_content, label=label, where='pre')
+            else:
+                bin_content, bin_edges = np.histogram(values, bins=bins, range=hist_range)
+                bincenters = 0.5 * (bin_edges[1:] + bin_edges[:-1])
+                bin_content = bin_content / values.shape[0]
+                ax.step(bincenters, bin_content, label=label, where='mid')
+                ax.set_yscale(settings['yscale'])
+
+        ax.set_title(name)
+        ax.legend()
+
+    plt.show()

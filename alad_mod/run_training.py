@@ -5,6 +5,7 @@ import importlib.util
 
 import tensorflow as tf
 import numpy as np
+import sklearn.preprocessing
 
 from alad_mod.alad import ALAD
 from data.hlf_dataset_utils import load_data, build_mask
@@ -38,6 +39,11 @@ if __name__ == '__main__':
         result_dir = os.path.join(config.result_path, args.resultdir)
 
     print('---------- LOADING DATA ----------')
+    # x_train = load_training_set(path=config.data_path,
+    #                             max_samples=config.max_train_samples,
+    #                             contamination=config.contamination,
+    #                             contamination_fraction=config.contamination_fraction)
+
     x_train = load_data(config.data_path, name='sm_mix', set='train')
 
     if x_train.shape[0] > config.max_train_samples:
@@ -45,11 +51,26 @@ if __name__ == '__main__':
         x_train = x_train[:config.max_train_samples]
     print('training data shapes:' + str(x_train.shape))
 
+    if config.contamination is not None:
+        x_cont = load_data(config.data_path, name=config.contamination, set='valid')
+        n_cont = int(config.contamination_fraction * x_train.shape[0])
+        x_cont = x_cont[:n_cont]
+        print('Adding %s contamination: %s' % (config.contamination, n_cont))
+        x_train = np.concatenate([x_train, x_cont])
+        x_train = sklearn.utils.shuffle(x_train)
+        print('training data shapes:' + str(x_train.shape))
+
     # load validation data sets
     x_valid_sm = load_data(config.data_path, name='sm_mix', set='valid')
     x_valid_bsm_dict = {}
     for bsm in config.bsm_list:
         x = load_data(config.data_path, name=bsm, set='valid')
+
+        # removing bsm samples used as contamination in training set
+        if config.contamination is not None and bsm == config.contamination:
+            print('removing contamination samples from ' + bsm)
+            x = x[n_cont:]
+
         if x.shape[0] > config.max_valid_samples:
             x = x[:config.max_valid_samples]
         x_valid_bsm_dict[bsm] = x

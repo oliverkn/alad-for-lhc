@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 metric_file = '/home/oliverkn/pro/results/4_4/alad/test_sm_train/metrics.npy'
-metric_file = '/home/oliverkn/euler/results/hlf_set/alad/0_l16_c1/metrics.npy'
+metric_file = '/home/oliverkn/euler/results/hlf_set/alad/2_l18/metrics.npy'
+
 
 vae_lr = {'Ato4l': 350, 'leptoquark': 80, 'hToTauTau': 45, 'hChToTauNu': 130}
 vae_auroc = {'Ato4l': 0.91, 'leptoquark': 0.85, 'hToTauTau': 0.75, 'hChToTauNu': 0.92}

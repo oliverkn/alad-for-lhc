@@ -7,25 +7,28 @@ result_path = '/home/oliverkn/pro/results/4_4/alad/'
 
 # preprocessor
 cont_list = ['HT', 'METp', 'METo', 'MT', 'nJets', 'bJets', 'allJetMass', 'LepPt', 'LepIsoCh', 'LepIsoGamma',
-             'LepIsoNeu', 'allMuMass', 'allMuPt', 'allEleMass', 'allElePt', 'nChHad', 'nNeuHad']
+             'LepIsoNeu', 'allMuMass', 'allMuPt', 'allEleMass', 'allElePt', 'nChHad', 'nNeuHad',
+             'nMu', 'nEle']
 
-disc_list = ['LepCharge', 'LepIsEle', 'nMu', 'nEle']
+disc_list = ['LepCharge', 'LepIsEle']  # , 'nMu', 'nEle']
 
 categories = [None] * len(disc_list)
 categories[0] = [-1, 1]
 categories[1] = [0, 1]
-categories[2] = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-categories[3] = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+# categories[2] = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+# categories[3] = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 
 # training set
 max_train_samples = 100_000_000  # inf
+contamination = 'Ato4l'
+contamination_fraction = 0.0002
 
 # validation set
 bsm_list = ['Ato4l', 'leptoquark', 'hToTauTau', 'hChToTauNu']
 max_valid_samples = 100_000
 
 # --------------------------------HYPERPARAMETERS--------------------------------
-input_dim = 39
+input_dim = 23
 latent_dim = 12
 
 learning_rate = 1e-5
