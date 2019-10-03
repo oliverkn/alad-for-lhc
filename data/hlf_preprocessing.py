@@ -49,6 +49,13 @@ class HLFDataPreprocessorV2:
 
         if self.disc_mask is not None:
             x_disc = x[:, self.disc_mask]
+
+            # clipping
+            for i, category in enumerate(self.categories):
+                min = np.amin(category)
+                max = np.amax(category)
+                x_disc[:, i] = np.clip(x_disc[:, i], min, max)
+
             self.enc = OneHotEncoder(categories=self.categories)
             self.enc.fit(x_disc)
 
@@ -58,6 +65,13 @@ class HLFDataPreprocessorV2:
 
         if self.disc_mask is not None:
             x_disc = x[:, self.disc_mask]
+
+            # clipping
+            for i, category in enumerate(self.categories):
+                min = np.amin(category)
+                max = np.amax(category)
+                x_disc[:, i] = np.clip(x_disc[:, i], min, max)
+
             x_disc = self.enc.transform(x_disc)
             return np.concatenate([x_cont, x_disc.toarray()], axis=1)
 
