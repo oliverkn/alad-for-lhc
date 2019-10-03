@@ -20,6 +20,37 @@ class AladPlotter:
         # load smmix, and bsm_list
         data = {}
         data['sm_mix'] = load_data(data_path, name='sm_mix', set='valid')
+        data['sm_mix_train'] = load_data(data_path, name='sm_mix', set='valid')
+
+        for bsm in self.bsm_list:
+            x = load_data(data_path, name=bsm, set='valid')
+            if x.shape[0] > max_samples:
+                x = x[:max_samples]
+            data[bsm] = x
+
+        # loading vae reference
+        vae_roc = {}
+        vae_roc['Ato4l'] = pickle.load(open('vae_roc/VAE_all-in-one_v71_ROC1_dict_Ato4l.pkl', 'rb'),
+                                       encoding='latin1')
+        vae_roc['leptoquark'] = pickle.load(open('vae_roc/VAE_all-in-one_v71_ROC1_dict_leptoquark.pkl', 'rb'),
+                                            encoding='latin1')
+        vae_roc['hToTauTau'] = pickle.load(open('vae_roc/VAE_all-in-one_v71_ROC1_dict_hToTauTau.pkl', 'rb'),
+                                           encoding='latin1')
+        vae_roc['hChToTauNu'] = pickle.load(open('vae_roc/VAE_all-in-one_v71_ROC1_dict_hChToTauNu.pkl', 'rb'),
+                                            encoding='latin1')
+        vae_roc['Wprime'] = pickle.load(open('vae_roc/VAE_all-in-one_v71_ROC1_dict_Wprime.pkl', 'rb'),
+                                        encoding='latin1')
+        vae_roc['Zprime'] = pickle.load(open('vae_roc/VAE_all-in-one_v71_ROC1_dict_Zprime.pkl', 'rb'),
+                                        encoding='latin1')
+
+        self.data = data
+        self.vae_roc = vae_roc
+        self.data_path = data_path
+
+    def load_data_train(self, data_path, max_samples=int(1e9)):
+        # load smmix, and bsm_list
+        data = {}
+        data['sm_mix'] = load_data(data_path, name='sm_mix', set='train')
 
         for bsm in self.bsm_list:
             x = load_data(data_path, name=bsm, set='valid')
@@ -99,6 +130,64 @@ class AladPlotter:
 
             ax.axvline(target_fpr, ls='--', color='magenta')
             ax.set_title('SM-mix + ' + bsm)
+            ax.set_xlabel('FPR')
+            ax.set_ylabel('TPR')
+            ax.grid()
+            ax.set(xlim=(1e-6, 1), ylim=(1e-6, 1))
+            ax.legend()
+
+        plt.show()
+
+    def plot_roc_contamination(self, contamination, fraction, target_fpr=1e-5):
+        x_cont = self.data[contamination]
+
+        x_sm_t = self.data['sm_mix_train']
+        n_cont_t = int(fraction * x_sm_t.shape[0])
+        x_cont_t = x_cont[:n_cont_t]
+        print('Adding %s contamination to t: %s' % (contamination, n_cont_t))
+
+        x_sm_v = self.data['sm_mix']
+        n_cont_v = int(fraction * x_sm_v.shape[0])
+        x_cont_v = x_cont[n_cont_v:]
+
+        print('Adding %s contamination to v: %s' % (contamination, n_cont_v))
+
+        x_tc = np.concatenate([x_sm_t, x_cont_t])
+        x_tc = self.preprocessor.transform(x_tc)
+        y_tc = np.concatenate([np.zeros(x_sm_t.shape[0]), np.ones(x_cont_t.shape[0])])
+
+        x_vc = np.concatenate([x_sm_v, x_cont_v])
+        x_vc = self.preprocessor.transform(x_vc)
+        y_vc = np.concatenate([np.zeros(x_sm_v.shape[0]), np.ones(x_cont_v.shape[0])])
+
+        all_scores_t = self.ad.compute_all_scores(x_tc)
+        all_scores_v = self.ad.compute_all_scores(x_vc)
+        score_names = ['fm', 'l1', 'l2', 'weighted_lp']
+        fig, ax_arr = plt.subplots(2, 2, figsize=(12, 12))
+
+        for i, scores_t, scores_v, name in zip(range(len(score_names)), all_scores_t, all_scores_v, score_names):
+            ax = ax_arr[i // 2, i % 2]
+
+            # train
+            fpr, tpr, _ = roc_curve(y_tc, scores_t, pos_label=1)
+            idx = np.argmax(fpr > target_fpr)
+            lr_plus = tpr[idx] / fpr[idx]
+            ax.loglog(fpr, tpr, label=name + '_t (LR+=%.2f)' % lr_plus)
+
+            # valid
+            fpr, tpr, _ = roc_curve(y_vc, scores_v, pos_label=1)
+            idx = np.argmax(fpr > target_fpr)
+            lr_plus = tpr[idx] / fpr[idx]
+            ax.loglog(fpr, tpr, label=name + '_v (LR+=%.2f)' % lr_plus)
+
+            # plot vae reference
+            fpr, tpr = self.vae_roc[contamination]['eff_SM'], self.vae_roc[contamination]['eff_BSM']
+            idx = np.argmax(fpr > target_fpr)
+            lr_plus = tpr[idx] / fpr[idx]
+            ax.loglog(fpr, tpr, label='vae (LR+=%.2f)' % lr_plus)
+
+            ax.axvline(target_fpr, ls='--', color='magenta')
+            ax.set_title('SM-mix + ' + contamination)
             ax.set_xlabel('FPR')
             ax.set_ylabel('TPR')
             ax.grid()

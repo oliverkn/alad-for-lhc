@@ -2,26 +2,33 @@ import tensorflow as tf
 import numpy as np
 
 # --------------------------------DATA--------------------------------
-data_file = '/home/oliverkn/pro/6021/chunk.hdf5'
+data_path = '/home/oliverkn/pro/data/hlf_set_new/'
 result_path = '/home/oliverkn/pro/results/4_4/alad/'
 
 # preprocessor
-cont_list = ['HT', 'mass_jet', 'n_jet', 'n_bjet', 'lep_pt', 'lep_iso_ch', 'lep_iso_neu',
-             'lep_iso_gamma', 'MET', 'METo', 'METp', 'MT', 'pt_mu', 'mass_mu', 'pt_ele',
-             'mass_ele', 'n_neu', 'n_ch']
+cont_list = ['HT', 'METp', 'METo', 'MT', 'nJets', 'bJets', 'allJetMass', 'LepPt', 'LepIsoCh', 'LepIsoGamma',
+             'LepIsoNeu', 'allMuMass', 'allMuPt', 'allEleMass', 'allElePt', 'nChHad', 'nNeuHad',
+             'nMu', 'nEle']
 
-disc_list = ['lep_charge', 'n_mu', 'n_ele']
+disc_list = ['LepCharge', 'LepIsEle']  # , 'nMu', 'nEle']
 
 categories = [None] * len(disc_list)
 categories[0] = [-1, 1]
-categories[1] = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-categories[2] = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+categories[1] = [0, 1]
+# categories[2] = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+# categories[3] = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 
 # training set
-max_train_samples = 100_000_000_000  # inf
+max_train_samples = 100_000_000  # inf
+contamination = 'Ato4l'
+contamination_fraction = 0.0002
+
+# validation set
+bsm_list = ['Ato4l', 'leptoquark', 'hToTauTau', 'hChToTauNu']
+max_valid_samples = 100_000
 
 # --------------------------------HYPERPARAMETERS--------------------------------
-input_dim = 38
+input_dim = 23
 latent_dim = 12
 
 learning_rate = 1e-5
@@ -43,7 +50,7 @@ eval_freq = 50_00
 checkpoint_freq = 50_00
 
 enable_sm = True
-enable_eval = False
+enable_eval = True
 enable_checkpoint_save = True
 
 
