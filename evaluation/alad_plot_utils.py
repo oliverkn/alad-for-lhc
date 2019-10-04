@@ -282,7 +282,7 @@ sim_hlf_plot_settings['nNeuHad'] = settings_default_int
 sim_hlf_plot_settings['nPhoton'] = settings_default_int
 
 
-def plot_sim_hlf(datasets, labels, quantile=0.01, bins=100):
+def plot_sim_hlf(datasets, labels, output_file=None, quantile=0.01, bins=100):
     f, ax_arr = plt.subplots(23 // 3 + 1, 3, figsize=(18, 40))
 
     for i, name in enumerate(feature_names):
@@ -321,4 +321,7 @@ def plot_sim_hlf(datasets, labels, quantile=0.01, bins=100):
         ax.set_title(name)
         ax.legend()
 
-    plt.show()
+    if output_file is not None:
+        plt.savefig(output_file)
+    else:
+        plt.show()
