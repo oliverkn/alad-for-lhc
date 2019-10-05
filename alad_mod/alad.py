@@ -291,6 +291,38 @@ class ALAD(AbstractAnomalyDetector):
         else:
             raise Exception()
 
+    def get_anomaly_scores_batch(self, x, batch_size=1024, type='fm'):
+        if type == 'fm':
+            score_node = self.score_fm
+        elif type == 'l1':
+            score_node = self.score_l1
+        elif type == 'l2':
+            score_node = self.score_l2
+        elif type == 'ch':
+            score_node = self.score_ch
+        elif type == 'weighted_lp':
+            score_node = self.score_wlp
+        else:
+            raise Exception()
+
+        n = x.shape[0]
+        scores = np.empty(n)
+        n_batches = int(n / batch_size) + 1
+        for t in range(n_batches):
+            ran_from = t * batch_size
+            ran_to = (t + 1) * batch_size
+            ran_to = np.clip(ran_to, 0, n)
+
+            x_batch = x[ran_from:ran_to]
+
+            feed_dict = {self.x_pl: x_batch,
+                         self.z_pl: np.random.normal(size=[x_batch.shape[0], self.config.latent_dim]),
+                         self.is_training_pl: False}
+
+            scores[ran_from, ran_to] = self.sess.run(score_node, feed_dict=feed_dict)
+
+        return scores
+
     def weighted_lp(self, x, ord=1, eps=1, a=0):
         feed_dict = {self.x_pl: x,
                      self.z_pl: np.random.normal(size=[x.shape[0], self.config.latent_dim]),

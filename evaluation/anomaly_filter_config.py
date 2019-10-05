@@ -1,5 +1,9 @@
-data_file = '/home/oliverkn/pro/data/hlf_set_new/sm_mix_valid.npy'
-result_path = '/home/oliverkn/euler/results/hlf_set/alad/2_l21/'
-model_file = 'model-17000000'
+data_file = '/home/oliverkn/pro/6021/data_hlf.hdf5'
+result_path = '/home/oliverkn/euler/results/record_6021/2_l16'
+model_file = 'model-10000000'
 
-efficiency = 1e-3
+score_type = 'fm'
+score_threshold = 80
+
+batch_size = 2 ** 20
+max_batches = 100

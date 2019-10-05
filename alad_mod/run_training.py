@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
     print('---------- LOADING DATA ----------')
     if config.data_file.endswith('.npy'):
-        x_train = np.load(config.data_path)
+        x_train = np.load(config.data_file)
     elif config.data_file.endswith('.hdf5'):
         hdf5_file = h5py.File(config.data_file, "r")
         x_train = hdf5_file['data'].value
