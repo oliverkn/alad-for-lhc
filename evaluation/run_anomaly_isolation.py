@@ -4,6 +4,7 @@ import importlib.util
 
 import tensorflow as tf
 import h5py
+import pickle
 import matplotlib.pyplot as plt
 
 from alad_mod.alad import ALAD
@@ -119,6 +120,15 @@ for i, name in enumerate(settings_6021.keys()):
     ax.legend()
 
 if args.target is not None:
+    hist_file_normal = args.target + '_hist_normal.pkl'
+    hist_file_anomalous = args.target + '_hist_anomalous.pkl'
+
+    print('saving normal data to ' + hist_file_normal)
+    pickle.dump(hist_builder_normal, open(hist_file_normal, 'wb'))
+
+    print('saving anomalous data to ' + hist_file_anomalous)
+    pickle.dump(hist_builder_anomalous, open(hist_file_anomalous, 'wb'))
+
     print('saving fig to ' + args.target)
     plt.savefig(args.target)
 else:

@@ -30,6 +30,8 @@ class HistogramBuilder:
                 fresult['bin_content'] = fresult['bin_content'] + bin_content
                 fresult['n'] = fresult['n'] + x.shape[0]
 
+            fresult['pdf'] = fresult['bin_content'] / fresult['n']
+
     def get_histogram_data(self):
         return self.result
 
@@ -58,3 +60,28 @@ settings_6021['mass_ele'] = {'range': (0, 500), 'yscale': 'log', 'bins': 100, 'i
 settings_6021['n_neu'] = {'range': (0, 400), 'yscale': 'linear', 'int': True, 'bin_size': 1}
 settings_6021['n_ch'] = {'range': (0, 1000), 'yscale': 'linear', 'int': True, 'bin_size': 1}
 settings_6021['n_photon'] = {'range': (0, 1000), 'yscale': 'linear', 'int': True, 'bin_size': 1}
+
+settings_hlf = {}
+settings_hlf['HT'] = {'range': (0, 400), 'yscale': 'log', 'bins': 100, 'int': False}
+settings_hlf['METp'] = {'range': (-100, 100), 'yscale': 'linear', 'bins': 100, 'int': False}
+settings_hlf['METo'] = {'range': (-100, 100), 'yscale': 'linear', 'bins': 100, 'int': False}
+settings_hlf['MT'] = {'range': (0, 300), 'yscale': 'linear', 'bins': 100, 'int': False}
+settings_hlf['n_jet'] = {'range': (0, 15), 'yscale': 'linear', 'int': True, 'bin_size': 1}
+settings_hlf['n_bjet'] = {'range': (0, 15), 'yscale': 'linear', 'int': True, 'bin_size': 1}
+settings_hlf['mass_jet'] = {'range': (0, 1000), 'yscale': 'log', 'bins': 100, 'int': False}
+settings_hlf['lep_pt'] = {'range': (20, 100), 'yscale': 'linear', 'bins': 100, 'int': False}
+settings_hlf['lep_eta'] = {'range': (-10, 10), 'yscale': 'linear', 'bins': 100, 'int': False}
+settings_hlf['lep_iso_ch'] = {'range': (0, 0.4), 'yscale': 'log', 'bins': 100, 'int': False}
+settings_hlf['lep_iso_gamma'] = {'range': (0, 0.4), 'yscale': 'log', 'bins': 100, 'int': False}
+settings_hlf['lep_iso_neu'] = {'range': (0, 0.4), 'yscale': 'log', 'bins': 100, 'int': False}
+settings_hlf['lep_charge'] = {'range': (-1, 1), 'yscale': 'linear', 'int': True}
+settings_hlf['lep_is_ele'] = {'range': (0, 1), 'yscale': 'linear', 'int': True}
+settings_hlf['n_mu'] = {'range': (0, 15), 'yscale': 'linear', 'int': True, 'bin_size': 1}
+settings_hlf['mass_mu'] = {'range': (0, 500), 'yscale': 'log', 'bins': 100, 'int': False}
+settings_hlf['pt_mu'] = {'range': (0, 200), 'yscale': 'log', 'bins': 100, 'int': False}
+settings_hlf['n_ele'] = {'range': (0, 15), 'yscale': 'linear', 'int': True, 'bin_size': 1}
+settings_hlf['mass_ele'] = {'range': (0, 500), 'yscale': 'log', 'bins': 100, 'int': False}
+settings_hlf['pt_ele'] = {'range': (0, 200), 'yscale': 'log', 'bins': 100, 'int': False}
+settings_hlf['n_ch'] = {'range': (0, 1000), 'yscale': 'linear', 'int': True, 'bin_size': 1}
+settings_hlf['n_neu'] = {'range': (0, 400), 'yscale': 'linear', 'int': True, 'bin_size': 1}
+settings_hlf['n_photon'] = {'range': (0, 1000), 'yscale': 'linear', 'int': True, 'bin_size': 1}
