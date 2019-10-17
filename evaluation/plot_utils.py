@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_hist(hist_data_list, labels, settings, output_file=None):
+def plot_hist(hist_data_list, labels, settings, output_file=None, all_lin=False):
     f, ax_arr = plt.subplots(23 // 3 + 1, 3, figsize=(18, 40))
 
     for i, name in enumerate(hist_data_list[0].keys()):
@@ -16,9 +16,13 @@ def plot_hist(hist_data_list, labels, settings, output_file=None):
             x = hist_data[name]['bin_edges']
             y = hist_data[name]['pdf']
             y = np.append(y, y[-1])
-            ax.step(x, y, label=label, where='post')
 
-        ax.set_yscale(fsettings['yscale'])
+            norm = np.sum(y)
+
+            ax.step(x, y, label='%s (a=%3f)'%(label,norm), where='post')
+
+        if all_lin is False:
+            ax.set_yscale(fsettings['yscale'])
         ax.set_title(name)
         ax.legend()
 

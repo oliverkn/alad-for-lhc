@@ -22,3 +22,9 @@ d['n'] = 1
 d['n'] = d['n'] + 1
 
 print(d)
+#%%
+hdf5_file = h5py.File('test.hdf5', "w")
+hdf5_file.create_dataset('data', data=data_fused, compression='gzip')
+
+
+hdf5_file.close()

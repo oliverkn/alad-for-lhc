@@ -52,6 +52,21 @@ def load_training_set(path, max_samples=None, contamination=None, contamination_
     return x_train
 
 
+def compile_mix(data_list, fractions):
+    # computing N s.t. fraction is possible
+    N = np.amin([data.shape[0] / f for data, f in zip(data_list, fractions)])
+    N = int(N)
+
+    for i in range(len(data_list)):
+        N_i = int(fractions[i] * N)
+        data_list[i] = data_list[i][0:N_i]
+
+    data_fused = np.concatenate(data_list, axis=0)
+    data_fused = sklearn.utils.shuffle(data_fused)
+
+    return data_fused
+
+
 # def load_bsm_set(path, name, max_samples=None, contamination=None, contamination_fraction=0, x_train):
 #     x = load_data(path, name=name, set='valid')
 #
