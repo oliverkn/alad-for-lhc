@@ -67,6 +67,22 @@ def compile_mix(data_list, fractions):
     return data_fused
 
 
+def compile_mix_with_labels(data_list, label_list, fractions):
+    # computing N s.t. fraction is possible
+    N = np.amin([data.shape[0] / f for data, f in zip(data_list, fractions)])
+    N = int(N)
+
+    for i in range(len(data_list)):
+        N_i = int(fractions[i] * N)
+        data_list[i] = data_list[i][0:N_i]
+        label_list[i] = label_list[i][0:N_i]
+
+    data_fused = np.concatenate(data_list, axis=0)
+    labels_fused = np.concatenate(label_list, axis=0)
+
+    return data_fused, labels_fused
+
+
 # def load_bsm_set(path, name, max_samples=None, contamination=None, contamination_fraction=0, x_train):
 #     x = load_data(path, name=name, set='valid')
 #

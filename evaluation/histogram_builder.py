@@ -35,6 +35,16 @@ class HistogramBuilder:
         return self.result
 
 
+def add(hist_a, hist_b, w_a, w_b):
+    hist_sum = {}
+    for name in hist_a.keys():
+        hist_sum[name] = {}
+        hist_sum[name]['bin_edges'] = hist_a[name]['bin_edges']
+        hist_sum[name]['pdf'] = w_a * hist_a[name]['pdf'] + w_b * hist_b[name]['pdf']
+
+    return hist_sum
+
+
 cont_bins = 20
 
 settings_6021 = {}
@@ -74,7 +84,7 @@ settings_6021['lep_iso_gamma'] = {'range': (0, 0.4), 'yscale': 'log', 'bins': co
 settings_6021['MET'] = {'range': (0, 1000), 'yscale': 'log', 'bins': cont_bins, 'int': False}
 settings_6021['METo'] = {'range': (-100, 100), 'yscale': 'linear', 'bins': cont_bins, 'int': False}
 settings_6021['METp'] = {'range': (-100, 100), 'yscale': 'linear', 'bins': cont_bins, 'int': False}
-settings_6021['MT'] = {'range': (0, 1000), 'yscale': 'log', 'bins': cont_bins, 'int': False}
+settings_6021['MT'] = {'range': (0, 200), 'yscale': 'log', 'bins': cont_bins, 'int': False}
 settings_6021['n_mu'] = {'range': (0, 15), 'yscale': 'linear', 'int': True, 'bin_size': 1}
 settings_6021['pt_mu'] = {'range': (0, 1000), 'yscale': 'log', 'bins': cont_bins, 'int': False}
 settings_6021['mass_mu'] = {'range': (0, 1000), 'yscale': 'log', 'bins': cont_bins, 'int': False}
