@@ -24,11 +24,12 @@ class HistogramBuilder:
                 fresult = self.result[feature_name]
                 fresult['bin_edges'] = bin_edges
                 fresult['bin_content'] = bin_content
+                fresult['n'] = values.shape[0]
             else:
                 fresult = self.result[feature_name]
                 fresult['bin_content'] = fresult['bin_content'] + bin_content
+                fresult['n'] = fresult['n'] + values.shape[0]
 
-            fresult['n'] = np.sum(fresult['bin_content'])
             fresult['pdf'] = fresult['bin_content'] / fresult['n']
 
     def get_histogram_data(self):
@@ -41,6 +42,19 @@ def add(hist_a, hist_b, w_a, w_b):
         hist_sum[name] = {}
         hist_sum[name]['bin_edges'] = hist_a[name]['bin_edges']
         hist_sum[name]['pdf'] = w_a * hist_a[name]['pdf'] + w_b * hist_b[name]['pdf']
+
+    return hist_sum
+
+
+def sum_hists(hist_list, weights):
+    hist_sum = {}
+    for name in hist_list[0].keys():
+        hist_sum[name] = {}
+        hist_sum[name]['bin_edges'] = hist_list[0][name]['bin_edges']
+        hist_sum[name]['pdf'] = np.zeros_like(hist_list[0][name]['pdf'])
+
+        for i, hist in enumerate(hist_list):
+            hist_sum[name]['pdf'] += hist[name]['pdf'] * weights[i]
 
     return hist_sum
 
