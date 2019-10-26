@@ -4,7 +4,7 @@ import numpy as np
 class HistogramBuilder:
     def __init__(self, settings):
         self.settings = settings
-        self.result = {}
+        self.hist_dict = {}
 
     def add_data(self, x):
         for i, feature_name in enumerate(self.settings.keys()):
@@ -19,44 +19,63 @@ class HistogramBuilder:
             else:
                 bin_content, bin_edges = np.histogram(values, bins=fsettings['bins'], range=hist_range)
 
-            if feature_name not in self.result:
-                self.result[feature_name] = {}
-                fresult = self.result[feature_name]
-                fresult['bin_edges'] = bin_edges
-                fresult['bin_content'] = bin_content
-                fresult['n'] = values.shape[0]
-            else:
-                fresult = self.result[feature_name]
-                fresult['bin_content'] = fresult['bin_content'] + bin_content
-                fresult['n'] = fresult['n'] + values.shape[0]
+            if feature_name not in self.hist_dict:
+                self.hist_dict[feature_name] = Histogram(bin_edges)
 
-            fresult['pdf'] = fresult['bin_content'] / fresult['n']
+            self.hist_dict[feature_name].add_data(values)
 
     def get_histogram_data(self):
-        return self.result
+        return self.hist_dict
 
 
-def add(hist_a, hist_b, w_a, w_b):
-    hist_sum = {}
-    for name in hist_a.keys():
-        hist_sum[name] = {}
-        hist_sum[name]['bin_edges'] = hist_a[name]['bin_edges']
-        hist_sum[name]['pdf'] = w_a * hist_a[name]['pdf'] + w_b * hist_b[name]['pdf']
+class Histogram:
+    def __init__(self, bin_edges):
+        self.bin_edges = bin_edges
+        self.bin_content = np.zeros(bin_edges.shape[0] - 1)
+        self.n = 0
 
-    return hist_sum
+    def add_data(self, x):
+        bin_content, bin_edges = np.histogram(x, bins=self.bin_edges)
+
+        self.bin_content = self.bin_content + bin_content
+        self.n += x.shape[0]
+
+    def scale(self, factor):
+        self.bin_content = self.bin_content * factor
+        self.n = self.n * factor
+
+    def __mul__(self, number):
+        scaled = Histogram(self.bin_edges)
+        scaled.bin_content = self.bin_content * number
+        scaled.n = self.n * number
+        return scaled
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __add__(self, other):
+        sum = Histogram(self.bin_edges)
+        sum.bin_content = self.bin_content + other.bin_content
+        sum.n = self.n + other.n
+        return sum
 
 
 def sum_hists(hist_list, weights):
     hist_sum = {}
-    for name in hist_list[0].keys():
-        hist_sum[name] = {}
-        hist_sum[name]['bin_edges'] = hist_list[0][name]['bin_edges']
-        hist_sum[name]['pdf'] = np.zeros_like(hist_list[0][name]['pdf'])
+    for key in hist_list[0].keys():
+        hist_sum[key] = Histogram(hist_list[0][key].bin_edges)
 
         for i, hist in enumerate(hist_list):
-            hist_sum[name]['pdf'] += hist[name]['pdf'] * weights[i]
+            hist_sum[key] = hist_sum[key] + weights[i] * hist[key]
 
     return hist_sum
+
+
+def scale_hists(hist, factor):
+    hist_scaled = {}
+    for key in hist.keys():
+        hist_scaled[key] = hist[key] * factor
+    return hist_scaled
 
 
 cont_bins = 20
