@@ -3,7 +3,7 @@ import numpy as np
 from prettytable import PrettyTable
 
 input_path = '/home/oliverkn/pro/data_raw/'
-target_path = '/home/oliverkn/pro/data/hlf_set_new'
+target_path = '/home/oliverkn/pro/data/hlf_test'
 
 fraction = np.array([0.592, 0.338, 0.067, 0.003])
 TrainSamplesName = ['Wlnu', 'qcd', 'Zll', 'ttbar']

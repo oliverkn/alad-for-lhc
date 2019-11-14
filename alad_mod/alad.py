@@ -346,7 +346,7 @@ class ALAD(AbstractAnomalyDetector):
         feed_dict = {self.x_pl: x,
                      self.z_pl: np.random.normal(size=[x.shape[0], self.config.latent_dim]),
                      self.is_training_pl: False}
-        scores = [self.score_fm, self.score_l1, self.score_l2, self.score_wlp]
+        scores = [self.score_fm, self.score_l1, self.score_l2, self.score_ch]
 
         return self.sess.run(scores, feed_dict=feed_dict)
 
