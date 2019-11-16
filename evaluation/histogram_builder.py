@@ -71,6 +71,17 @@ def sum_hists(hist_list, weights):
     return hist_sum
 
 
+def sum_hists(hist_list):
+    hist_sum = {}
+    for key in hist_list[0].keys():
+        hist_sum[key] = Histogram(hist_list[0][key].bin_edges)
+
+        for i, hist in enumerate(hist_list):
+            hist_sum[key] = hist_sum[key] + hist[key]
+
+    return hist_sum
+
+
 def scale_hists(hist, factor):
     hist_scaled = {}
     for key in hist.keys():
