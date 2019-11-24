@@ -14,7 +14,11 @@ class HistogramBuilder:
             values = x[:, i]
 
             if fsettings['int']:
-                bin_edges = np.arange(int(hist_range[0]), int(hist_range[1]) + 2) - 0.5
+                if 'bin_size' in fsettings:
+                    bin_size = fsettings['bin_size']
+                else:
+                    bin_size = 1
+                bin_edges = np.arange(int(hist_range[0]/bin_size), int(hist_range[1]/bin_size) + 2) * bin_size - 0.5
                 bin_content, bin_edges = np.histogram(values, bins=bin_edges)
             else:
                 bin_content, bin_edges = np.histogram(values, bins=fsettings['bins'], range=hist_range)
