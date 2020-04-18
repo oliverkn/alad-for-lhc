@@ -10,7 +10,7 @@ import sklearn.preprocessing
 from alad_mod.alad import ALAD
 from data.hlf_dataset_utils import load_data, build_mask
 from data.hlf_preprocessing import HLFDataPreprocessorV2
-from evaluation.basic_evaluator import BasicEvaluator
+from alad_mod.evaluator import Evaluator
 
 if __name__ == '__main__':
 
@@ -111,7 +111,7 @@ if __name__ == '__main__':
     preprocessor.save(os.path.join(result_dir, 'preprocessor.pkl'))
 
     print('---------- INIT EVALUATOR ----------')
-    evaluator = BasicEvaluator()
+    evaluator = Evaluator()
 
     score_types = ['fm', 'l1']  # , 'l2', 'ch']
     for type in score_types:

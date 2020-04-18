@@ -334,14 +334,6 @@ class ALAD(AbstractAnomalyDetector):
 
         return np.sum(diff, axis=1)
 
-    # def p_test(self, x, x_train):
-    #     # compute variance for x_train recon
-    #     std_recon, bin_edges, _ = binned_statistic(x_i, x_recon_i, statistic=np.std, bins=n_bins, range=histo_range)
-    #
-    #     x_reco = self.recon(x)
-    #
-    #     return np.sum(diff, axis=1)
-
     def compute_all_scores(self, x):
         feed_dict = {self.x_pl: x,
                      self.z_pl: np.random.normal(size=[x.shape[0], self.config.latent_dim]),
