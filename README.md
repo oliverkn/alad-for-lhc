@@ -1,6 +1,6 @@
 # Adversarially Learned Anomaly Detection on CMS Open Data
 
-The code for the paper ["Adversarially Learned Anomaly Detection on CMS Open Data: re-discovering the top quark" (authors: Oliver Knapp and Guenther Dissertori and Olmo Cerri and Thong Q. Nguyen and Jean-Roch Vlimant and Maurizio Pierini)](https://arxiv.org/abs/2005.01598).
+The code for the paper ["Adversarially Learned Anomaly Detection on CMS Open Data: re-discovering the top quark" (authors: Oliver Knapp and Guenther Dissertori and Olmo Cerri and Thong Q. Nguyen and Jean-Roch Vlimant and Maurizio Pierini)](https://doi.org/10.1140/epjp/s13360-021-01109-4).
 
 Please cite our work if you find it useful for your research and work.
 
